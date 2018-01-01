@@ -210,25 +210,25 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         }
 
         // contain within the bounds of the box
-//        for (PointMass &pm : point_masses) {
-//            if (pm.predict_position.x < -0.1) {
-//                pm.predict_position.x = -0.1 + 0.01;
-//            } else if (pm.predict_position.x > 1.3) {
-//                pm.predict_position.x = 1.3 - 0.01;
-//            }
-//
-//            if (pm.predict_position.y < -0.2) {
-//                pm.predict_position.y = -0.2 + 0.01;
-//            } else if (pm.predict_position.y > 1.2) {
-//                pm.predict_position.y = 1.2 - 0.01;
-//            }
-//
-//            if (pm.predict_position.z < -0.2) {
-//                pm.predict_position.z = -0.2 + 0.01;
-//            } else if (pm.predict_position.z > 1.2) {
-//                pm.predict_position.z = 1.2 - 0.01;
-//            }
-//        }
+        for (PointMass &pm : point_masses) {
+            if (pm.predict_position.x < -0.6) {
+                pm.predict_position.x = -0.6 + 0.01;
+            } else if (pm.predict_position.x > 2.4) {
+                pm.predict_position.x = 2.4 - 0.01;
+            }
+
+            if (pm.predict_position.y < -0.6) {
+                pm.predict_position.y = -0.6 + 0.01;
+            } else if (pm.predict_position.y > 1.6) {
+                pm.predict_position.y = 1.6 - 0.01;
+            }
+
+            if (pm.predict_position.z < -0.6) {
+                pm.predict_position.z = -0.6 + 0.01;
+            } else if (pm.predict_position.z > 1.6) {
+                pm.predict_position.z = 1.6 - 0.01;
+            }
+        }
     }
 
     // update velocity, apply vorticity and viscosity constraints
@@ -244,7 +244,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         // Update vorticity
         Vector3D force_vort = force_vorticity_i(pm);
         //std::cout << "Vorticity = " << force_vort << "\n";
-        pm.velocity += (force_vort / mass) * delta_t;
+        pm.velocity += 3 * (force_vort / mass) * delta_t;
 
         assert(check_vector(pm.velocity));
 
