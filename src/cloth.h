@@ -59,6 +59,8 @@ struct Cloth {
   void build_spatial_map();
   void self_collide(PointMass &pm, double simulation_steps);
   float hash_position(Vector3D pos);
+  Vector3D Cloth::calculate_delta_p(PointMass &pm_i);
+  double Cloth::kernel_poly6(Vector3D pos_dif, double radius);
 
   // Cloth properties
   double width;
