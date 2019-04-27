@@ -31,7 +31,7 @@ Cloth::~Cloth() {
 }
 
 void Cloth::buildGrid() {
-  // TODO (Part 1): Build a grid of masses and springs.
+  // TODO (Part 1): Build a grid of masses.
 
     // Make all the point masses
     double start_left = 0;
@@ -57,56 +57,6 @@ void Cloth::buildGrid() {
             point_masses.push_back(PointMass(pos, pinnedPoint));
         }
     }
-
-    // Make all the springs
-    // for (int r = 0; r < num_height_points; r++) {
-    //     for (int c = 0; c < num_width_points; c++) {
-    //
-    //         // For each point, (r,c), generate the 6 possible springs
-    //         if (c > 0) {
-    //             // Make left structural constraint spring
-    //             // PointMass leftStruc = point_masses[r * num_width_points + (c - 1)];
-    //             springs.push_back(Spring(&point_masses[r * num_width_points + c],
-    //                                      &point_masses[r * num_width_points + (c - 1)],
-    //                                      STRUCTURAL));
-    //         }
-    //
-    //         if (r > 0) {
-    //             // Make above structural constraint spring
-    //             springs.push_back(Spring(&point_masses[r * num_width_points + c],
-    //                                      &point_masses[(r - 1) * num_width_points + c],
-    //                                      STRUCTURAL));
-    //         }
-    //
-    //         if (r > 0 && c > 0) {
-    //             // Make the diagonal upper left shearing constraint spring
-    //             springs.push_back(Spring(&point_masses[r * num_width_points + c],
-    //                                      &point_masses[(r - 1) * num_width_points + (c - 1)],
-    //                                      SHEARING));
-    //         }
-    //
-    //         if (r > 0 && c < num_width_points - 1) {
-    //             // Make the diagonal right shearing constraint spring
-    //             springs.push_back(Spring(&point_masses[r * num_width_points + c],
-    //                                      &point_masses[(r - 1) * num_width_points + (c + 1)],
-    //                                      SHEARING));
-    //         }
-    //
-    //         if (c > 1) {
-    //             // Make the 2left bending constraint spring
-    //             springs.push_back(Spring(&point_masses[r * num_width_points + c],
-    //                                      &point_masses[r * num_width_points + (c - 2)],
-    //                                      BENDING));
-    //         }
-    //
-    //         if (r > 1) {
-    //             // Make the 2above bending constraint spring
-    //             springs.push_back(Spring(&point_masses[r * num_width_points + c],
-    //                                      &point_masses[(r - 2) * num_width_points + c],
-    //                                      BENDING));
-    //         }
-    //     }
-    // }
 }
 
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
@@ -115,42 +65,9 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
   double mass = width * height * cp->density / num_width_points / num_height_points;
   double delta_t = 1.0f / frames_per_sec / simulation_steps;
 
-  // TODO (Part 2): Compute total force acting on each point mass.
-  Vector3D total_ext_force = Vector3D(0,0,0);
-  for (int i = 0; i < external_accelerations.size(); i++) {
-      total_ext_force += external_accelerations[i] * mass;
-  }
-
   for (PointMass &pm : point_masses) {
-      pm.forces = total_ext_force;
-  }
-
-  // for (Spring &sp : springs) {
-  //     double Fs = 0;
-  //     if ((sp.spring_type == STRUCTURAL && cp->enable_structural_constraints) ||
-  //         (sp.spring_type == SHEARING && cp->enable_shearing_constraints)) {
-  //         Fs = cp->ks * ((sp.pm_a->position - sp.pm_b->position).norm() - sp.rest_length);
-  //     } else if (sp.spring_type == BENDING && cp->enable_bending_constraints) {
-  //         Fs = 0.2 * cp->ks * ((sp.pm_a->position - sp.pm_b->position).norm() - sp.rest_length);
-  //     } else {
-  //         continue;
-  //     }
-  //     Vector3D direction = (sp.pm_b->position - sp.pm_a->position);
-  //     direction.normalize();
-  //     Vector3D spring_force = Fs * direction;
-  //     sp.pm_a->forces += spring_force;
-  //     sp.pm_b->forces -= spring_force;
-  // }
-
-  // TODO (Part 2): Use Verlet integration to compute new point mass positions
-  for (PointMass &pm : point_masses) {
-      if (!pm.pinned) {
-          Vector3D xt = Vector3D(pm.position);
-          Vector3D old_last = Vector3D(pm.last_position);
-          pm.last_position = xt;
-          Vector3D acc = pm.forces / mass;
-          pm.position = xt + (1 - cp->damping/100.0)*(xt - old_last) + acc * pow(delta_t, 2);
-      }
+      pm.velocity += external_accelerations[0] * delta_t;
+      pm.predict_position = pm.position + delta_t * pm.velocity;
   }
 
   build_spatial_map();
@@ -166,36 +83,6 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
           co->collide(pm);
       }
   }
-
-  // TODO (Part 2): Constrain the changes to be such that the spring does not change
-  // in length more than 10% per timestep [Provot 1995].
-  // for (Spring &sp : springs) {
-  //     double dist = (sp.pm_a->position - sp.pm_b->position).norm();
-  //     if (dist > 1.1 * sp.rest_length) {
-  //         // If both are pinned, move neither
-  //         if (sp.pm_a->pinned && sp.pm_b->pinned) {
-  //             continue;
-  //         }
-  //         // If one of the two is pinned, only move the not-pinned one
-  //         else if (sp.pm_a->pinned) {
-  //             Vector3D directionAtoB = sp.pm_b->position - sp.pm_a->position;
-  //             directionAtoB.normalize();
-  //             sp.pm_b->position = sp.pm_a->position + 1.1 * sp.rest_length * directionAtoB;
-  //         } else if (sp.pm_b->pinned) {
-  //             Vector3D directionBtoA = sp.pm_a->position - sp.pm_b->position;
-  //             directionBtoA.normalize();
-  //             sp.pm_a->position = sp.pm_b->position + 1.1 * sp.rest_length * directionBtoA;
-  //         }
-  //         // If neither is pinned, move both
-  //         else {
-  //             Vector3D directionAtoB = sp.pm_b->position - sp.pm_a->position;
-  //             directionAtoB.normalize();
-  //             Vector3D halfway = (sp.pm_a->position + sp.pm_b->position) / 2.0;
-  //             sp.pm_a->position = halfway - 0.55 * sp.rest_length * directionAtoB;
-  //             sp.pm_b->position = halfway + 0.55 * sp.rest_length * directionAtoB;
-  //         }
-  //     }
-  // }
 
 }
 
@@ -218,6 +105,19 @@ void Cloth::build_spatial_map() {
           map.find(hash_pos)->second->push_back(&pm);
       }
   }
+}
+
+double kernel_poly6(Vector3D pos_dif, double radius) {
+  double r = pos_dif.norm();
+  if (0 <= r && r <= h) {
+    double mult = pow((pow(h,2) - pow(r,2)), 3);
+    return 315. / 64. / M_PI / pow(h,9) * mult;
+  }
+  return 0;
+}
+
+double calculate_density_neighbors() {
+  return 0;
 }
 
 void Cloth::self_collide(PointMass &pm, double simulation_steps) {
