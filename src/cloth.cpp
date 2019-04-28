@@ -135,7 +135,7 @@ void Cloth::build_spatial_map() {
 }
 
 
-//##########################################################
+// ##########################################################
 Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
   float hash_pos = hash_position(pm_i.position);
   auto getter = map.find(hash_pos);
@@ -192,6 +192,17 @@ Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
 
 }
 
+Vector3D Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
+  double r = pos_dif.norm();
+  double operand = -pow(r,3)/(2*pow(h,3)) + pow(r,2) / pow(h,2) + h / (2*r) - 1;
+
+  if (0 <= r && r <= h) {
+    double mult = -15. / 2 / M_PI / pow(h,3);
+    return mult * operand;
+  }
+  return Vector3D(0);
+
+}
 
 Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
   float hash_pos = hash_position(pm_i.position);
@@ -232,7 +243,7 @@ double Cloth::lambda_i(PointMass &pm) {
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   for (PointMass *neighbor : *neighbors) {
-    Vector3D grad_Ci_pk = delta_constraint_pk(pm, *neighbor);
+    Vector3D grad_Ci_pk = delta_constraint_pk(pm, neighbor);
     denom += pow(grad_Ci_pk.norm(), 2);
   }
 
@@ -242,8 +253,79 @@ double Cloth::lambda_i(PointMass &pm) {
   return lambda;
 }
 
+Vector3D Cloth::vorticity_wi(PointMass &pm_i) {
+  float hash_pos = hash_position(pm_i.position);
+  auto getter = map.find(hash_pos);
+  vector<PointMass *> *neighbors = getter->second;
+  double h = 3 * width / num_width_points / 2;
 
-//#######################################
+  Vector3D w_i = Vector3D();
+  for (PointMass *neighbor : *neighbors) {
+      if (neighbor == &pm_i) {
+          continue;
+      } else {
+        Vector3D neighborToPm = (pm_i.position - neighbor->position);
+        w_i += cross((pm_i.velocity - neighbor->velocity), (spiky_kernel_grad(neighborToPm, h)));
+      }
+  }
+
+  return w_i;
+}
+
+Vector3D Cloth::location_vector(PointMass &pm_i) {
+  // note: uses Bubbles Alive, Hong et al [2008]
+
+  float hash_pos = hash_position(pm_i.position);
+  auto getter = map.find(hash_pos);
+  vector<PointMass *> *neighbors = getter->second;
+  double h = 3 * width / num_width_points / 2;
+
+  Vector3D p_pos_sum = Vector3D();
+  for (PointMass *neighbor : *neighbors) {
+    p_pos_sum += neighbor->position;
+  }
+
+  Vector3D n = p_pos_sum / neighbors->size() - pm_i.position;
+
+  n.normalize();
+
+  return n;
+}
+
+Vector3D Cloth::force_vorticity_i(PointMass &pm_i) {
+  Vector3D w_i = vorticity_wi(pm_i);
+  Vector3D location_i = location_vector(pm_i);
+
+  Vector3D force_i = cross(location_i, w_i);
+
+  // TODO epsilon: user specified relaxation parameter
+  // force_i *= epsilon;
+
+  return force_i;
+}
+
+void Cloth::viscosity_constraint(PointMass &pm_i) {
+  double c = 0.01;
+
+  float hash_pos = hash_position(pm_i.position);
+  auto getter = map.find(hash_pos);
+  vector<PointMass *> *neighbors = getter->second;
+  double h = 3 * width / num_width_points / 2;
+
+  Vector3D viscosity_sum = 0;
+  for (PointMass *neighbor : *neighbors) {
+      if (neighbor == &pm_i) {
+          continue;
+      } else {
+        Vector3D neighborToPm = (pm_i.position - neighbor->position);
+        viscosity_sum += cross((pm_i.velocity - neighbor->velocity), viscosity_kernel(neighborToPm, h));
+      }
+  }
+
+  pm_i.velocity = pm_i.velocity + c*viscosity_sum;
+}
+
+// #######################################
 
 
 void Cloth::self_collide(PointMass &pm, double simulation_steps) {

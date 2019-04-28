@@ -66,6 +66,12 @@ struct Cloth {
   Vector3D spiky_kernel_grad(Vector3D pos_dif, double radius);
   double calculate_density_neighbors(PointMass &pm);
 
+  Vector3D location_vector(PointMass &pm_i);
+  Vector3D force_vorticity_i(PointMass &pm_i);
+  void viscosity_constraint(PointMass &pm_i);
+  Vector3D vorticity_wi(PointMass &pm_i);
+  Vector3D viscosity_kernel(Vector3D pos_dif, double h);
+
   // Cloth properties
   double width;
   double height;
