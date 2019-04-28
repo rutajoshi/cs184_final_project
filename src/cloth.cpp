@@ -78,9 +78,9 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       pm.predict_position = pm.position + delta_t * pm.velocity;
 
       // test
-      if (isnan(pm.velocity.x) || isnan(pm.predict_position.x)) {
-          std::cout << "\nVelocity or position is nan for position = " << pm.position << "\n";
-      }
+      assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
+      assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
+
   }
 
 
@@ -90,10 +90,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       lambda_i(pm);
 
       // test
-      if (isinf(pm.lambda)) {
-          lambda_i(pm);
-          std::cout << "\nLambda is inf for position = " << pm.position << "\n";
-      }
+      assert(!isnan(pm.lambda) && !isinf(pm.lambda));
+      
     }
 
 
@@ -101,9 +99,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
       // test
-      if (isnan(pm.delta_position.x)) {
-          std::cout << "\nDelta pos is nan for position = " << pm.position << "\n";
-      }
+      assert(!isnan(pm.delta_position.y) && !isinf(pm.delta_position.y));
 
       // Collision detection and response
       for (CollisionObject* c : *collision_objects){
@@ -116,30 +112,31 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       pm.predict_position += pm.delta_position;
 
       // test
-      if (isnan(pm.predict_position.x)) {
-          std::cout << "\nPredict position is NAN. position = " << pm.position << "\n";
-      }
+      assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
     }
   }
 
   for (PointMass &pm : point_masses) {
     // Update velocity
     pm.velocity = (1.0 / delta_t) * (pm.predict_position - pm.position);
+    assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
+    
 
     // Update vorticity
     Vector3D force_vort = force_vorticity_i(pm);
     pm.velocity += (force_vort / mass) * delta_t;
 
+    assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
+
     // Update viscosity (happens in place)
     viscosity_constraint(pm);
+    assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
 
     // Update position
     pm.position = pm.predict_position;
 
     // test
-    if (isnan(pm.position.x)) {
-        std::cout << "\n Position is nan: " << pm.position << "\n";
-    }
+    assert(!isnan(pm.position.y) && !isinf(pm.position.y));
   }
 
 }
