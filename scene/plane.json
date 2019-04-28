@@ -10,10 +10,25 @@
     "friction": 0.5
   },
   "left": {
-    "point": [-1, 0, -1],
+    "point": [-2, 0, -2],
     "normal": [1, 0, 0],
     "friction": 0.5
   },
+
+  "right": {
+    "point": [2, 0, 2],
+    "normal": [-1, 0, 0],
+    "friction": 0.5
+  },
+
+   "back": {
+    "point": [2, 0, 2],
+    "normal": [0, 0, 1],
+    "friction": 0.5
+  },
+    
+
+
   "cloth": {
     "damping": 0.2,
     "density": 150.0,

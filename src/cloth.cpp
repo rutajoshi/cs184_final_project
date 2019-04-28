@@ -10,6 +10,8 @@
 
 using namespace std;
 
+static int count_steps;
+
 Cloth::Cloth(double width, double height, int num_width_points,
              int num_height_points, float thickness) {
   this->width = width;
@@ -63,6 +65,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
                      vector<CollisionObject *> *collision_objects) {
   double mass = width * height * cp->density / num_width_points / num_height_points;
   double delta_t = 1.0f / frames_per_sec / simulation_steps;
+  count_steps += 1;
 
   Vector3D total_ext_force = Vector3D(0,0,0);
   for (int i = 0; i < external_accelerations.size(); i++) {
@@ -85,6 +88,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
   build_spatial_map();
+  // assert(count_steps < 27499);
   for (int j = 0; j < 10; j++) {
     for (PointMass &pm : point_masses) {
       lambda_i(pm);
@@ -99,13 +103,22 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
       // test
+      assert(!isnan(pm.delta_position.z) && !isinf(pm.delta_position.z));
+      assert(!isnan(pm.delta_position.x) && !isinf(pm.delta_position.x));
       assert(!isnan(pm.delta_position.y) && !isinf(pm.delta_position.y));
+      // if (count_steps > 27497) {
+        // std::cout << "\n" << pm.delta_position << "\n";
+      // }
+
 
       // Collision detection and response
+     std::cout << " \n plane "<< count_steps << " \n";
       for (CollisionObject* c : *collision_objects){
         c->collide(pm);
       }
+     
     }
+    // assert(count_steps < 27499);
 
     for (PointMass &pm : point_masses) {
       // Update predicted positions
@@ -115,6 +128,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
     }
   }
+  // assert(count_steps < 27499);
 
   for (PointMass &pm : point_masses) {
     // Update velocity
@@ -129,7 +143,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
 
     // Update viscosity (happens in place)
-    viscosity_constraint(pm);
+    // viscosity_constraint(pm);
     assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
 
     // Update position
