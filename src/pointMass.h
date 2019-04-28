@@ -27,7 +27,7 @@ struct PointMass {
   Vector3D last_position;
   Vector3D predict_position;
   Vector3D velocity;
-  // Vector3D forces;
+  Vector3D forces;
   Vector3D delta_position;
   double lambda = 0.0;
 

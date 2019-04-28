@@ -73,6 +73,7 @@ struct Cloth {
   int num_height_points;
   double thickness;
   e_orientation orientation;
+  double epsilon;
 
   // Cloth components
   vector<PointMass> point_masses;
