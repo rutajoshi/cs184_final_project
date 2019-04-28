@@ -43,8 +43,8 @@ struct ClothParameters {
 
 struct Cloth {
   Cloth() {}
-  Cloth(double width, double height, int num_width_points,
-        int num_height_points, float thickness);
+  Cloth(double width, double height, double depth, int num_width_points,
+        int num_height_points, int num_depth_points, float thickness);
   ~Cloth();
 
   void buildGrid();
@@ -76,8 +76,10 @@ struct Cloth {
   // Cloth properties
   double width;
   double height;
+  double depth;
   int num_width_points;
   int num_height_points;
+  int num_depth_points;
   double thickness;
   e_orientation orientation;
   double epsilon;

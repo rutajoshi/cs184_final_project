@@ -328,7 +328,7 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
   //                   cp->enable_bending_constraints * num_bending_springs;
 
   // MatrixXf positions(4, num_springs * 2);
-  MatrixXf positions(4, cloth->num_width_points * cloth->num_height_points);
+  MatrixXf positions(4, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
   // MatrixXf normals(4, num_springs * 2);
 
   int si = 0;
@@ -374,7 +374,7 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
 
   // shader.drawArray(GL_LINES, 0, num_springs * 2);
   // glDisable(GL_PROGRAM_POINT_SIZE);
-  shader.drawArray(GL_POINTS, 0, cloth->num_width_points * cloth->num_height_points);
+  shader.drawArray(GL_POINTS, 0, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
 
 #ifdef LEAK_PATCH_ON
   shader.freeAttrib("in_position");

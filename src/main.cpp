@@ -188,8 +188,8 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
     // Parse object depending on type (cloth, sphere, or plane)
     if (key == CLOTH) {
       // Cloth
-      double width, height;
-      int num_width_points, num_height_points;
+      double width, height, depth;
+      int num_width_points, num_height_points, num_depth_points;
       float thickness;
       e_orientation orientation;
       vector<vector<int>> pinned;
@@ -208,6 +208,13 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
         incompleteObjectError("cloth", "height");
       }
 
+      auto it_depth = object.find("depth");
+      if (it_depth != object.end()) {
+          depth = *it_depth;
+      } else {
+          incompleteObjectError("cloth", "depth");
+      }
+
       auto it_num_width_points = object.find("num_width_points");
       if (it_num_width_points != object.end()) {
         num_width_points = *it_num_width_points;
@@ -220,6 +227,13 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
         num_height_points = *it_num_height_points;
       } else {
         incompleteObjectError("cloth", "num_height_points");
+      }
+
+      auto it_num_depth_points = object.find("num_depth_points");
+      if (it_num_depth_points != object.end()) {
+          num_depth_points = *it_num_depth_points;
+      } else {
+          incompleteObjectError("cloth", "num_depth_points");
       }
 
       auto it_thickness = object.find("thickness");
@@ -247,8 +261,10 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
 
       cloth->width = width;
       cloth->height = height;
+      cloth->depth = depth;
       cloth->num_width_points = num_width_points;
       cloth->num_height_points = num_height_points;
+      cloth->num_depth_points = num_depth_points;
       cloth->thickness = thickness;
       cloth->orientation = orientation;
       cloth->pinned = pinned;
