@@ -192,7 +192,7 @@ Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
 
 }
 
-Vector3D Cloth::viscosity_kernel(Vector3D pos_dif, double radius) {
+Vector3D Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   double operand = -pow(r,3)/(2*pow(h,3)) + pow(r,2) / pow(h,2) + h / (2*r) - 1;
 
@@ -265,7 +265,7 @@ Vector3D Cloth::vorticity_wi(PointMass &pm_i) {
           continue;
       } else {
         Vector3D neighborToPm = (pm_i.position - neighbor->position);
-        w_i += (pm_i.velocity - neighbor->velocity) * spiky_kernel_grad(neighborToPm, h);
+        w_i += cross((pm_i.velocity - neighbor->velocity), (spiky_kernel_grad(neighborToPm, h)));
       }
   }
 
@@ -280,12 +280,12 @@ Vector3D Cloth::location_vector(PointMass &pm_i) {
   vector<PointMass *> *neighbors = getter->second;
   double h = 3 * width / num_width_points / 2;
 
-  Vector3D p_sum = Vector3D();
+  Vector3D p_pos_sum = Vector3D();
   for (PointMass *neighbor : *neighbors) {
-    p_sum += neighbor->position;
+    p_pos_sum += neighbor->position;
   }
 
-  Vector3D n = p_sum / neighbors.size() - pm_i;
+  Vector3D n = p_pos_sum / neighbors->size() - pm_i.position;
 
   n.normalize();
 
@@ -294,9 +294,9 @@ Vector3D Cloth::location_vector(PointMass &pm_i) {
 
 Vector3D Cloth::force_vorticity_i(PointMass &pm_i) {
   Vector3D w_i = vorticity_wi(pm_i);
-  Vector3D location_vector = location_vector(pm_i);)
+  Vector3D location_i = location_vector(pm_i);
 
-  Vector3D force_i = location_vector.cross(w_i);
+  Vector3D force_i = cross(location_i, w_i);
 
   // TODO epsilon: user specified relaxation parameter
   // force_i *= epsilon;
@@ -318,7 +318,7 @@ void Cloth::viscosity_constraint(PointMass &pm_i) {
           continue;
       } else {
         Vector3D neighborToPm = (pm_i.position - neighbor->position);
-        viscosity_sum += (pm_i.velocity - neighbor->velocity) * viscosity_kernel(neighborToPm, h);
+        viscosity_sum += cross((pm_i.velocity - neighbor->velocity), viscosity_kernel(neighborToPm, h));
       }
   }
 
