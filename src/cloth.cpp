@@ -122,9 +122,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // Collision detection and response
      std::cout << " \n plane "<< count_steps << " \n";
-      for (CollisionObject* c : *collision_objects){
-        c->collide(pm);
-      }
+      
      
     }
     // assert(count_steps < 27499);
@@ -132,6 +130,9 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     for (PointMass &pm : point_masses) {
       // Update predicted positions
       pm.predict_position += pm.delta_position;
+      for (CollisionObject* c : *collision_objects){
+        c->collide(pm);
+      }
 
       // test
       assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
@@ -278,6 +279,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
 
 Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
+  pos_dif.normalize();
   if (0 <= r && r <= h) {
     double mult = -45. /M_PI / pow(h,6) * pow((h - r), 2);
     return mult * pos_dif;

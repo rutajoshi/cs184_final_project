@@ -19,14 +19,22 @@ void Plane::collide(PointMass &pm) {
 
   // then the points are on opposite sides of the plane
   if (t_pos * t_lastpos <= 0) {
-      Vector3D tangentPoint = pm.predict_position + t_pos * (-normal);
-      Vector3D correctionPoint = tangentPoint + SURFACE_OFFSET * normal;
+      Vector3D correctionPoint;
+      if (t_pos < 0) {
+        Vector3D tangentPoint = pm.predict_position + t_pos * (-normal);
+        correctionPoint = tangentPoint + SURFACE_OFFSET * normal;
+      } else {
+        Vector3D tangentPoint = pm.predict_position + t_pos * (normal);
+        correctionPoint = tangentPoint - SURFACE_OFFSET * normal;
+      }
       Vector3D correction = correctionPoint - pm.position;
       pm.predict_position = pm.position + (1 - friction) * correction;
+      
   }
 }
 
 void Plane::render(GLShader &shader) {
+  return;
   nanogui::Color color(0.7f, 0.7f, 0.7f, 1.0f);
 
   Vector3f sPoint(point.x, point.y, point.z);
