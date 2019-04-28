@@ -15,6 +15,8 @@
 #include "misc/file_utils.h"
 // Needed to generate stb_image binaries. Should only define in exactly one source file importing stb_image.h.
 #define STB_IMAGE_IMPLEMENTATION
+#define GL_POINT_SMOOTH 0x0B10
+#define GL_POINT_SMOOTH_HINT 0x0C51
 #include "misc/stb_image.h"
 
 using namespace nanogui;
@@ -162,9 +164,10 @@ ClothSimulator::ClothSimulator(std::string project_root, Screen *screen)
   this->load_shaders();
   this->load_textures();
 
-  // glEnable(GL_PROGRAM_POINT_SIZE);
   glPointSize(10);
-  // glEnable(GL_POINT_SMOOTH);
+  glEnable(GL_MULTISAMPLE);
+  glEnable( GL_BLEND );
+  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   glEnable(GL_DEPTH_TEST);
 }
 
