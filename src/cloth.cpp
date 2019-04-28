@@ -52,9 +52,7 @@ void Cloth::buildGrid() {
           }
           vector<int> rc{ r, c };
           bool pinnedPoint = false;
-          if (std::find(pinned.begin(), pinned.end(), rc) != pinned.end()) {
-              pinnedPoint = true;
-          }
+
           point_masses.push_back(PointMass(pos, pinnedPoint));
       }
   }
@@ -78,16 +76,34 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
   for (PointMass &pm : point_masses) {
       pm.velocity += (pm.forces / mass) * delta_t;
       pm.predict_position = pm.position + delta_t * pm.velocity;
+
+      // test
+      if (isnan(pm.velocity.x) || isnan(pm.predict_position.x)) {
+          std::cout << "\n" << pm.position << "\n";
+      }
   }
 
+
   build_spatial_map();
-  for (int j = 0; j < 40 ; j++) {
+  for (int j = 0; j < 4; j++) {
     for (PointMass &pm : point_masses) {
-      pm.lambda = lambda_i(pm);
+      lambda_i(pm);
+
+      // test
+      if (isinf(pm.lambda)) {
+          lambda_i(pm);
+          std::cout << "\n" << pm.position << "\n";
+      }
     }
+
 
     for (PointMass &pm : point_masses) {
       pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
+
+      // test
+      if (isnan(pm.delta_position.x)) {
+          std::cout << "\n" << pm.position << "\n";
+      }
 
       // Collision detection and response
       for (CollisionObject* c : *collision_objects){
@@ -98,16 +114,32 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     for (PointMass &pm : point_masses) {
       // Update predicted positions
       pm.predict_position += pm.delta_position;
+
+      // test
+      if (isnan(pm.predict_position.x)) {
+          std::cout << "\n" << pm.position << "\n";
+      }
     }
   }
 
   for (PointMass &pm : point_masses) {
     // Update velocity
     pm.velocity = (1.0 / delta_t) * (pm.predict_position - pm.position);
+
     // Update vorticity
-    // Update viscosity
+    Vector3D force_vort = force_vorticity_i(pm);
+    pm.velocity += (force_vort / mass) * delta_t;
+
+    // Update viscosity (happens in place)
+    viscosity_constraint(pm);
+
     // Update position
     pm.position = pm.predict_position;
+
+    // test
+    if (isnan(pm.position.x)) {
+        std::cout << "\n" << pm.position << "\n";
+    }
   }
 
 }
@@ -138,6 +170,12 @@ void Cloth::build_spatial_map() {
 // ##########################################################
 Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
   float hash_pos = hash_position(pm_i.position);
+
+  // test
+  if (isnan(hash_pos)) {
+      std::cout << "\n" << pm_i.position << "\n";
+  }
+
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   double h = 3 * width / num_width_points / 2;
@@ -150,7 +188,27 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
       }
       Vector3D neighborToPm = (pm_i.position - neighbor->position);
       Vector3D term = spiky_kernel_grad(neighborToPm, h);
-      delta_p += (pm_i.lambda + neighbor->lambda) * term;
+
+      // test
+      if (isnan(term.x)) {
+          std::cout << "\n" << pm_i.position << "\n";
+      }
+
+      delta_p = delta_p + (pm_i.lambda + neighbor->lambda) * term;
+
+      // test
+      if (isnan(pm_i.lambda)) {
+          std::cout << "\n" << pm_i.position << "\n";
+      }
+      // test
+      if (isnan(neighbor->lambda)) {
+          std::cout << "\n" << pm_i.position << "\n";
+      }
+
+      // test
+      if (isnan(delta_p.y)) {
+          std::cout << "\n" << pm_i.position << "\n";
+      }
   }
   delta_p = (1.0 / pm_i.rest_density) * delta_p;
   return delta_p;
@@ -168,6 +226,12 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
 
 double Cloth::calculate_density_neighbors(PointMass &pm) {
   float hash_pos = hash_position(pm.position);
+
+  // test
+  if (isnan(hash_pos)) {
+    std::cout << "\n" << pm.position << "\n";
+  }
+
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   double h = 3 * width / num_width_points / 2;
@@ -233,7 +297,7 @@ Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
 
 }
 
-double Cloth::lambda_i(PointMass &pm) {
+void Cloth::lambda_i(PointMass &pm) {
   double rho_i = calculate_density_neighbors(pm);
   double rho_o = pm.rest_density;
   double C_i = (rho_i / rho_o) - 1.0;
@@ -247,10 +311,11 @@ double Cloth::lambda_i(PointMass &pm) {
     denom += pow(grad_Ci_pk.norm(), 2);
   }
 
-  denom += epsilon;
+  denom += this->epsilon;
 
   double lambda = -1.0 * C_i / denom;
-  return lambda;
+
+  pm.lambda = lambda;
 }
 
 Vector3D Cloth::vorticity_wi(PointMass &pm_i) {

@@ -252,6 +252,7 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
       cloth->thickness = thickness;
       cloth->orientation = orientation;
       cloth->pinned = pinned;
+      cloth->epsilon = 0.01;
 
       // Cloth parameters
       bool enable_structural_constraints, enable_shearing_constraints, enable_bending_constraints;
