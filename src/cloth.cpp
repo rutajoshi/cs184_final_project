@@ -17,6 +17,7 @@ Cloth::Cloth(double width, double height, int num_width_points,
   this->num_width_points = num_width_points;
   this->num_height_points = num_height_points;
   this->thickness = thickness;
+  this->epsilon = 0.01;
 
   buildGrid();
   buildClothMesh();
@@ -65,8 +66,17 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
   double mass = width * height * cp->density / num_width_points / num_height_points;
   double delta_t = 1.0f / frames_per_sec / simulation_steps;
 
+  Vector3D total_ext_force = Vector3D(0,0,0);
+  for (int i = 0; i < external_accelerations.size(); i++) {
+      total_ext_force += external_accelerations[i] * mass;
+  }
+
   for (PointMass &pm : point_masses) {
-      pm.velocity += external_accelerations[0] * delta_t;
+      pm.forces = total_ext_force;
+  }
+
+  for (PointMass &pm : point_masses) {
+      pm.velocity += (pm.forces / mass) * delta_t;
       pm.predict_position = pm.position + delta_t * pm.velocity;
   }
 
@@ -134,15 +144,13 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   Vector3D delta_p = Vector3D();
 
-  double lambda_i = pm_i.lambda;
-
   for (PointMass *neighbor : *neighbors) {
       if (neighbor == &pm_i) {
           continue;
       }
       Vector3D neighborToPm = (pm_i.position - neighbor->position);
       Vector3D term = spiky_kernel_grad(neighborToPm, h);
-      delta_p += (lambda_i + neighbor -> lambda) * term;
+      delta_p += (pm_i.lambda + neighbor->lambda) * term;
   }
   delta_p = (1.0 / pm_i.rest_density) * delta_p;
   return delta_p;
@@ -238,6 +246,8 @@ double Cloth::lambda_i(PointMass &pm) {
     Vector3D grad_Ci_pk = delta_constraint_pk(pm, neighbor);
     denom += pow(grad_Ci_pk.norm(), 2);
   }
+
+  denom += epsilon;
 
   double lambda = -1.0 * C_i / denom;
   return lambda;
