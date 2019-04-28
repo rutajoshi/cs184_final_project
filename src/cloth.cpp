@@ -85,7 +85,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
   build_spatial_map();
-  for (int j = 0; j < 4; j++) {
+  for (int j = 0; j < 10; j++) {
     for (PointMass &pm : point_masses) {
       lambda_i(pm);
 
@@ -165,6 +165,16 @@ void Cloth::build_spatial_map() {
 
 
 // ##########################################################
+double Cloth::calc_h() {
+  double w = 3 * width / num_width_points;
+  double h = 3 * height / num_height_points;
+  double t = max(w, h);
+  // Diagonal of rectagnular prism
+  double d = pow(w, 2) + pow(h,2) + pow(t,2);
+  return sqrt(d) / 2.0 ;
+}
+
+
 Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
   float hash_pos = hash_position(pm_i.position);
 
@@ -175,7 +185,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
-  double h = 3 * width / num_width_points / 2;
+  double h = calc_h();
 
   Vector3D delta_p = Vector3D();
 
@@ -231,7 +241,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
 
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
-  double h = 3 * width / num_width_points / 2;
+  double h = calc_h();
   double sum = 0;
   for (PointMass *neighbor : *neighbors) {
       if (neighbor == &pm) {
@@ -269,7 +279,7 @@ Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
   float hash_pos = hash_position(pm_i.position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
-  double h = 3 * width / num_width_points / 2;
+  double h = calc_h();
 
   if (&pm_k == &pm_i) {
     // k = i
@@ -319,7 +329,7 @@ Vector3D Cloth::vorticity_wi(PointMass &pm_i) {
   float hash_pos = hash_position(pm_i.position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
-  double h = 3 * width / num_width_points / 2;
+  double h = calc_h();
 
   Vector3D w_i = Vector3D();
   for (PointMass *neighbor : *neighbors) {
@@ -340,7 +350,7 @@ Vector3D Cloth::location_vector(PointMass &pm_i) {
   float hash_pos = hash_position(pm_i.position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
-  double h = 3 * width / num_width_points / 2;
+  double h = calc_h();
 
   Vector3D p_pos_sum = Vector3D();
   for (PointMass *neighbor : *neighbors) {
@@ -372,7 +382,7 @@ void Cloth::viscosity_constraint(PointMass &pm_i) {
   float hash_pos = hash_position(pm_i.position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
-  double h = 3 * width / num_width_points / 2;
+  double h = calc_h();
 
   Vector3D viscosity_sum = 0;
   for (PointMass *neighbor : *neighbors) {

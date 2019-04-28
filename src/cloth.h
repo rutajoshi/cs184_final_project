@@ -71,6 +71,7 @@ struct Cloth {
   void viscosity_constraint(PointMass &pm_i);
   Vector3D vorticity_wi(PointMass &pm_i);
   Vector3D viscosity_kernel(Vector3D pos_dif, double h);
+  double calc_h();
 
   // Cloth properties
   double width;
