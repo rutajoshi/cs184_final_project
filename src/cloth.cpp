@@ -81,8 +81,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
       // Collision detection and response
-      for (CollisionObject &c : collision_objects){
-        c -> collide(pm);
+      for (CollisionObject* c : *collision_objects){
+        c->collide(pm);
       }
     }
 
@@ -126,7 +126,7 @@ void Cloth::build_spatial_map() {
 }
 
 
-##########################################################
+//##########################################################
 Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
   float hash_pos = hash_position(pm_i.position);
   auto getter = map.find(hash_pos);
@@ -135,13 +135,13 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   Vector3D delta_p = Vector3D();
 
-  double lambda_i = pm_i -> lambda;
+  double lambda_i = pm_i.lambda;
 
   for (PointMass *neighbor : *neighbors) {
-      if (neighbor == &pm) {
+      if (neighbor == &pm_i) {
           continue;
       }
-      Vector3D neighborToPm = (pm.position - neighbor->position);
+      Vector3D neighborToPm = (pm_i.position - neighbor->position);
       Vector3D term = spiky_kernel_grad(neighborToPm, h);
       delta_p += (lambda_i * neighbor -> lambda) * term;
   }
@@ -149,7 +149,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
 }
 
-double Cloth::kernel_poly6(Vector3D pos_dif, double radius) {
+double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   if (0 <= r && r <= h) {
     double mult = pow((pow(h,2) - pow(r,2)), 3);
@@ -174,7 +174,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
   return sum;
 }
 
-Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double radius) {
+Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   if (0 <= r && r <= h) {
     double mult = -45. /M_PI / pow(h,6) * pow((h - r), 2);
@@ -195,37 +195,37 @@ Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
     // k = i
     Vector3D sum = Vector3D();
     for (PointMass *neighbor : *neighbors) {
-        if (neighbor == &pm) {
+        if (neighbor == &pm_i) {
             continue;
         } else{
-          Vector3D neighborToPm = (pm.position - neighbor->position);
+          Vector3D neighborToPm = (pm_i.position - neighbor->position);
           sum += spiky_kernel_grad(neighborToPm, h);
 
         }
     }
-    sum /= (pm_i->rest_density);
+    sum /= (pm_i.rest_density);
     return sum;
 
   } else {
     // k = j
-    Vector3D pi_pk = (pm_i->position - pm_k->position);
-    return -1 * (1.0 / pm_i->rest_density) * spiky_kernel_grad(pi_pk, h);
+    Vector3D pi_pk = (pm_i.position - pm_k.position);
+    return -1 * (1.0 / pm_i.rest_density) * spiky_kernel_grad(pi_pk, h);
   }
 
 }
 
 double Cloth::lambda_i(PointMass &pm) {
   double rho_i = calculate_density_neighbors(pm);
-  double rho_o = pm->rest_density;
+  double rho_o = pm.rest_density;
   double C_i = (rho_i / rho_o) - 1.0;
 
   double denom = 0.0;
-  float hash_pos = hash_position(pm_i.position);
+  float hash_pos = hash_position(pm.position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   for (PointMass *neighbor : *neighbors) {
-    Vector3D grad_Ci_pk = delta_constraint_pk(pm, neighbor);
-    denom += pow(grad_Ci_pk.norm(), 2); 
+    Vector3D grad_Ci_pk = delta_constraint_pk(pm, *neighbor);
+    denom += pow(grad_Ci_pk.norm(), 2);
   }
 
   double lambda = -1.0 * C_i / denom;
@@ -233,7 +233,7 @@ double Cloth::lambda_i(PointMass &pm) {
 }
 
 
-#######################################
+//#######################################
 
 
 void Cloth::self_collide(PointMass &pm, double simulation_steps) {
