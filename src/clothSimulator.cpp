@@ -162,7 +162,9 @@ ClothSimulator::ClothSimulator(std::string project_root, Screen *screen)
   this->load_shaders();
   this->load_textures();
 
-  glEnable(GL_PROGRAM_POINT_SIZE);
+  // glEnable(GL_PROGRAM_POINT_SIZE);
+  glPointSize(10);
+  // glEnable(GL_POINT_SMOOTH);
   glEnable(GL_DEPTH_TEST);
 }
 
@@ -368,6 +370,7 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
   //shader.uploadAttrib("in_normal", normals);
 
   // shader.drawArray(GL_LINES, 0, num_springs * 2);
+  // glDisable(GL_PROGRAM_POINT_SIZE);
   shader.drawArray(GL_POINTS, 0, cloth->num_width_points * cloth->num_height_points);
 
 #ifdef LEAK_PATCH_ON
