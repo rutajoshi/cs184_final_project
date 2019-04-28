@@ -33,31 +33,30 @@ Cloth::~Cloth() {
 
 void Cloth::buildGrid() {
   // TODO (Part 1): Build a grid of masses.
+  // Make all the point masses
+  double start_left = 0;
+  double start_right = 0;
+  for (int c = 0; c < num_width_points; c++) {
+      for (int r = 0; r < num_height_points; r++) {
+          double x = start_left + r * (height / (num_height_points - 1));
+          double y = start_right + c * (width / (num_width_points - 1));
 
-    // Make all the point masses
-    double start_left = 0;
-    double start_right = 0;
-    for (int c = 0; c < num_width_points; c++) {
-        for (int r = 0; r < num_height_points; r++) {
-            double x = start_left + r * (height / (num_height_points - 1));
-            double y = start_right + c * (width / (num_width_points - 1));
-
-            Vector3D pos;
-            if (orientation == HORIZONTAL) {
-                pos = Vector3D(x, 1, y);
-            }
-            else {
-                double z = ((rand() % 2) - 1.0) / 1000;
-                pos = Vector3D(x, y, z);
-            }
-            vector<int> rc{ r, c };
-            bool pinnedPoint = false;
-            if (std::find(pinned.begin(), pinned.end(), rc) != pinned.end()) {
-                pinnedPoint = true;
-            }
-            point_masses.push_back(PointMass(pos, pinnedPoint));
-        }
-    }
+          Vector3D pos;
+          if (orientation == HORIZONTAL) {
+              pos = Vector3D(x, 1, y);
+          }
+          else {
+              double z = ((rand() % 2) - 1.0) / 1000;
+              pos = Vector3D(x, y, z);
+          }
+          vector<int> rc{ r, c };
+          bool pinnedPoint = false;
+          if (std::find(pinned.begin(), pinned.end(), rc) != pinned.end()) {
+              pinnedPoint = true;
+          }
+          point_masses.push_back(PointMass(pos, pinnedPoint));
+      }
+  }
 }
 
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
@@ -81,8 +80,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
       // Collision detection and response
-      for (CollisionObject &c : collision_objects){
-        c -> collide(pm);
+      for (CollisionObject* c : *collision_objects){
+        c->collide(pm);
       }
     }
 
@@ -94,7 +93,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
   for (PointMass &pm : point_masses) {
     // Update velocity
-    pm.velocity = 1.0 / delta_t * (pm.predict_position - pm.position);
+    pm.velocity = (1.0 / delta_t) * (pm.predict_position - pm.position);
     // Update vorticity
     // Update viscosity
     // Update position
@@ -135,21 +134,22 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   Vector3D delta_p = Vector3D();
 
-  double lambda_i = pm_i -> lambda;
+  double lambda_i = pm_i.lambda;
 
   for (PointMass *neighbor : *neighbors) {
-      if (neighbor == &pm) {
+      if (neighbor == &pm_i) {
           continue;
       }
-      Vector3D neighborToPm = (pm.position - neighbor->position);
+      Vector3D neighborToPm = (pm_i.position - neighbor->position);
       Vector3D term = spiky_kernel_grad(neighborToPm, h);
-      delta_p += (lambda_i * neighbor -> lambda) * term;
+      delta_p += (lambda_i + neighbor -> lambda) * term;
   }
+  delta_p = (1.0 / pm_i.rest_density) * delta_p;
   return delta_p;
 
 }
 
-double Cloth::kernel_poly6(Vector3D pos_dif, double radius) {
+double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   if (0 <= r && r <= h) {
     double mult = pow((pow(h,2) - pow(r,2)), 3);
@@ -174,7 +174,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
   return sum;
 }
 
-Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double radius) {
+Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   if (0 <= r && r <= h) {
     double mult = -45. /M_PI / pow(h,6) * pow((h - r), 2);
@@ -206,32 +206,32 @@ Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
     // k = i
     Vector3D sum = Vector3D();
     for (PointMass *neighbor : *neighbors) {
-        if (neighbor == &pm) {
+        if (neighbor == &pm_i) {
             continue;
         } else{
-          Vector3D neighborToPm = (pm.position - neighbor->position);
+          Vector3D neighborToPm = (pm_i.position - neighbor->position);
           sum += spiky_kernel_grad(neighborToPm, h);
 
         }
     }
-    sum /= (pm_i->rest_density);
+    sum /= (pm_i.rest_density);
     return sum;
 
   } else {
     // k = j
-    Vector3D pi_pk = (pm_i->position - pm_k->position);
-    return -1 * (1.0 / pm_i->rest_density) * spiky_kernel_grad(pi_pk, h);
+    Vector3D pi_pk = (pm_i.position - pm_k.position);
+    return -1 * (1.0 / pm_i.rest_density) * spiky_kernel_grad(pi_pk, h);
   }
 
 }
 
 double Cloth::lambda_i(PointMass &pm) {
   double rho_i = calculate_density_neighbors(pm);
-  double rho_o = pm->rest_density;
+  double rho_o = pm.rest_density;
   double C_i = (rho_i / rho_o) - 1.0;
 
   double denom = 0.0;
-  float hash_pos = hash_position(pm_i.position);
+  float hash_pos = hash_position(pm.position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   for (PointMass *neighbor : *neighbors) {
@@ -290,7 +290,7 @@ Vector3D Cloth::force_vorticity_i(PointMass &pm_i) {
 
   // TODO epsilon: user specified relaxation parameter
   // force_i *= epsilon;
-  
+
   return force_i;
 }
 
