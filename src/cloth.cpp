@@ -12,8 +12,8 @@ using namespace std;
 
 static int count_steps;
 
-Cloth::Cloth(double width, double height, int num_width_points,
-             int num_height_points, float thickness) {
+Cloth::Cloth(double width, double height, double depth, int num_width_points,
+             int num_height_points, int num_depth_points, float thickness) {
 
   this->width = width;
   this->height = height;
