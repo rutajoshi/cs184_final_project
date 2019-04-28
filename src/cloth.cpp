@@ -10,12 +10,14 @@
 
 using namespace std;
 
-Cloth::Cloth(double width, double height, int num_width_points,
-             int num_height_points, float thickness) {
+Cloth::Cloth(double width, double height, double depth, int num_width_points,
+             int num_height_points, int num_depth_points, float thickness) {
   this->width = width;
   this->height = height;
+  this->depth = depth;
   this->num_width_points = num_width_points;
   this->num_height_points = num_height_points;
+  this->num_depth_points = num_depth_points;
   this->thickness = thickness;
   this->epsilon = 0.01;
 
@@ -37,23 +39,29 @@ void Cloth::buildGrid() {
   // Make all the point masses
   double start_left = 0;
   double start_right = 0;
-  for (int c = 0; c < num_width_points; c++) {
-      for (int r = 0; r < num_height_points; r++) {
-          double x = start_left + r * (height / (num_height_points - 1));
-          double y = start_right + c * (width / (num_width_points - 1));
+  double start_bottom = 0;
+  for (int p = 0; p < num_depth_points; p++) {
+      for (int c = 0; c < num_width_points; c++) {
+          for (int r = 0; r < num_height_points; r++) {
+              double x = start_left + r * (height / (num_height_points - 1));
+              double y = start_right + c * (width / (num_width_points - 1));
+              double z = start_bottom + p * (depth / (num_depth_points - 1));
 
-          Vector3D pos;
-          if (orientation == HORIZONTAL) {
-              pos = Vector3D(x, 1, y);
-          }
-          else {
-              double z = ((rand() % 2) - 1.0) / 1000;
-              pos = Vector3D(x, y, z);
-          }
-          vector<int> rc{ r, c };
-          bool pinnedPoint = false;
+              Vector3D pos;
+              if (orientation == HORIZONTAL) {
+                  //pos = Vector3D(x, 1, y);
+                  pos = Vector3D(x, z, y);
+              }
+              else {
+                  //double offset = ((rand() % 2) - 1.0) / 1000;
+                  //pos = Vector3D(x, y, offset);
+                  pos = Vector3D(x, y, z);
+              }
+              //vector<int> rc{ r, c };
+              bool pinnedPoint = false;
 
-          point_masses.push_back(PointMass(pos, pinnedPoint));
+              point_masses.push_back(PointMass(pos, pinnedPoint));
+          }
       }
   }
 }
@@ -61,7 +69,7 @@ void Cloth::buildGrid() {
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
                      vector<Vector3D> external_accelerations,
                      vector<CollisionObject *> *collision_objects) {
-  double mass = width * height * cp->density / num_width_points / num_height_points;
+  double mass = width * height * cp->density / num_width_points / num_height_points / num_depth_points;
   double delta_t = 1.0f / frames_per_sec / simulation_steps;
 
   Vector3D total_ext_force = Vector3D(0,0,0);
@@ -427,8 +435,9 @@ float Cloth::hash_position(Vector3D pos) {
   // TODO (Part 4): Hash a 3D position into a unique float identifier that represents membership in some 3D box volume.
   double w = 3 * width / num_width_points;
   double h = 3 * height / num_height_points;
-  double t = max(w, h);
-  Vector3D truncated = Vector3D((pos.x - fmod(pos.x, w)) / w, (pos.y - fmod(pos.y, h)) / h, (pos.z - fmod(pos.z, t)) / t);
+  double d = 3 * depth / num_depth_points;
+  //double t = max(w, h, d);
+  Vector3D truncated = Vector3D((pos.x - fmod(pos.x, w)) / w, (pos.y - fmod(pos.y, h)) / h, (pos.z - fmod(pos.z, d)) / d);
   float hash_value = truncated.x * pow(3, 3) + truncated.y * pow(3, 2) + truncated.z * pow(3, 1);
   return hash_value;
 }
