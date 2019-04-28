@@ -243,7 +243,7 @@ double Cloth::lambda_i(PointMass &pm) {
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   for (PointMass *neighbor : *neighbors) {
-    Vector3D grad_Ci_pk = delta_constraint_pk(pm, neighbor);
+    Vector3D grad_Ci_pk = delta_constraint_pk(pm, *neighbor);
     denom += pow(grad_Ci_pk.norm(), 2);
   }
 
