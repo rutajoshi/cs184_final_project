@@ -79,7 +79,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // test
       if (isnan(pm.velocity.x) || isnan(pm.predict_position.x)) {
-          std::cout << "\n" << pm.position << "\n";
+          std::cout << "\nVelocity or position is nan for position = " << pm.position << "\n";
       }
   }
 
@@ -92,7 +92,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       // test
       if (isinf(pm.lambda)) {
           lambda_i(pm);
-          std::cout << "\n" << pm.position << "\n";
+          std::cout << "\nLambda is inf for position = " << pm.position << "\n";
       }
     }
 
@@ -102,7 +102,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // test
       if (isnan(pm.delta_position.x)) {
-          std::cout << "\n" << pm.position << "\n";
+          std::cout << "\nDelta pos is nan for position = " << pm.position << "\n";
       }
 
       // Collision detection and response
@@ -117,7 +117,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // test
       if (isnan(pm.predict_position.x)) {
-          std::cout << "\n" << pm.position << "\n";
+          std::cout << "\nPredict position is NAN. position = " << pm.position << "\n";
       }
     }
   }
@@ -138,7 +138,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
     // test
     if (isnan(pm.position.x)) {
-        std::cout << "\n" << pm.position << "\n";
+        std::cout << "\n Position is nan: " << pm.position << "\n";
     }
   }
 
@@ -173,7 +173,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   // test
   if (isnan(hash_pos)) {
-      std::cout << "\n" << pm_i.position << "\n";
+      std::cout << "\nHash pos is nan for position = " << pm_i.position << "\n";
   }
 
   auto getter = map.find(hash_pos);
@@ -191,23 +191,23 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
       // test
       if (isnan(term.x)) {
-          std::cout << "\n" << pm_i.position << "\n";
+          std::cout << "\nSpiky kernel x is nan for position = " << pm_i.position << "\n";
       }
 
       delta_p = delta_p + (pm_i.lambda + neighbor->lambda) * term;
 
       // test
       if (isnan(pm_i.lambda)) {
-          std::cout << "\n" << pm_i.position << "\n";
+          std::cout << "\nLambda is nan for position = " << pm_i.position << "\n";
       }
       // test
       if (isnan(neighbor->lambda)) {
-          std::cout << "\n" << pm_i.position << "\n";
+          std::cout << "\nNeighbor lambda is nan for position = " << pm_i.position << "\n";
       }
 
       // test
       if (isnan(delta_p.y)) {
-          std::cout << "\n" << pm_i.position << "\n";
+          std::cout << "\nDelta position is nan for position = " << pm_i.position << "\n";
       }
   }
   delta_p = (1.0 / pm_i.rest_density) * delta_p;
@@ -229,7 +229,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
 
   // test
   if (isnan(hash_pos)) {
-    std::cout << "\n" << pm.position << "\n";
+    std::cout << "\nHash position is nan for position = " << pm.position << "\n";
   }
 
   auto getter = map.find(hash_pos);
@@ -350,7 +350,7 @@ Vector3D Cloth::location_vector(PointMass &pm_i) {
     p_pos_sum += neighbor->position;
   }
 
-  Vector3D n = p_pos_sum / neighbors->size() - pm_i.position;
+  Vector3D n = p_pos_sum / (neighbors->size() + epsilon) - pm_i.position;
 
   n.normalize();
 
