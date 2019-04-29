@@ -18,9 +18,9 @@
     "width": 1,
     "height": 1,
     "depth": 1,
-    "num_width_points": 5,
-    "num_height_points": 5,
-    "num_depth_points": 5,
+    "num_width_points": 10,
+    "num_height_points": 10,
+    "num_depth_points": 10,
     "thickness": 0.0095
   }
 }
