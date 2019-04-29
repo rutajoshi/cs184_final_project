@@ -62,7 +62,7 @@ struct Cloth {
   Vector3D calculate_delta_p(PointMass &pm_i);
   double kernel_poly6(Vector3D pos_dif, double radius);
   void lambda_i(PointMass &pm);
-  Vector3D delta_constraint_pk(PointMass &pm_i, PointMass &pm_k);
+  double delta_constraint_pk(PointMass &pm_i, PointMass &pm_k);
   Vector3D spiky_kernel_grad(Vector3D pos_dif, double radius);
   double calculate_density_neighbors(PointMass &pm);
 
