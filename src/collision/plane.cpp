@@ -20,6 +20,7 @@ void Plane::collide(PointMass &pm) {
 
   // then the points are on opposite sides of the plane
   if (t_pos * t_lastpos <= 0) {
+//      std::cout<<"\n collision occured \n";
       Vector3D correctionPoint;
       if (t_pos <= 0) {
         Vector3D tangentPoint = pm.predict_position + t_pos * (-normal);
