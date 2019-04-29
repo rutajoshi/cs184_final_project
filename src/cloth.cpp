@@ -315,7 +315,8 @@ Vector3D Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
 
   if (0 <= r && r <= h) {
     // double mult = -15. / 2 / M_PI / pow(h,3);
-    return  45.0 / M_PI / pow(h, 6) * (h - r);
+    double mult = 45.0 / M_PI / pow(h, 6) * (h - r);
+    return  mult;
   }
   assert( r > h);
   return Vector3D(0);
