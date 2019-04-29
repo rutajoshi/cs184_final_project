@@ -28,7 +28,118 @@
 <h1 align="middle">Final Project Checkpoint: Fluid Simulation with Varying Density</h1>
 <h2 align="middle">Team: Ruta Joshi (26122656), Jacqueline Forsberg (26814270), Eric D’Sa (26127496)</h2>
 
-<h3 align="middle"> Progress So Far </h3>
+<br><br>
+
+<h3>Summary</h3>
+<p>
+  Our group is working on a fluid simulation. We are aiming to create a
+  simulation for fluids with a density control to adjust the density of
+  the fluid. In this way, we can test different kinds of fluids with
+  the same simulation.
+</p>
+
+<br>
+
+<h3>What We Have Accomplished</h3>
+<p>
+  We adapted our project 4 code to create a starting point for our fluid
+  simulation. However, project 4 simulated the movement of a cloth, which
+  differs from a fluid in many key ways. We changed the way we create our
+  simulation in the following ways:
+</p>
+<ul>
+  <li>
+    Our cloth is no longer a cloth. We create point masses, and do not
+    create any springs, or any other connections between point masses.
+    A cloth had particles that stuck together in a fixed fashion. In a
+    fluid, the bonds between particles are less rigid.
+  </li>
+  <li>
+    We needed to create a box in which our fluid will fall in. We changed
+    the code to allow us to add multiple planes to one run of the simulation.
+  </li>
+  <li>
+    We changed our rendering for point masses and planes. Our point masses
+    are displayed as round blue spheres, and our planes are red squares.
+  </li>
+  <li>
+    We removed multiple shader controls, since we are focused on particle
+    interactions and not shading.
+  </li>
+  <li>
+    We added slider controls for density.
+  </li>
+</ul>
+<p>
+  After this, we implemented the simulation loop in the following research
+  paper (https://mmacklin.com/pbf_sig_preprint.pdf). This simulation loop
+  contains checks for constraints on a fluid, including incompressibility,
+  tensile instability, vorticity, and viscosity.
+</p>
+
+<br>
+
+<h3>Preliminary Results</h3>
+<p>
+  We have multiple point masses, moving independently of each other. Our
+  simulation has rendering changes to better display the movement of a
+  fluid, as well as a density control for the fluid. We have implemented
+  our simulation loop; however, the position function of our point masses
+  diverges after a few time steps, which results in large point displacements.
+</p>
+
+<br>
+
+<h3>Progress (Relative To Our Plan)</h3>
+<p>
+  We had three main goals in our plan. Our progress can be summarized as the following:
+</p>
+<ul>
+  <li>
+    <b>Fluid Simulation: </b> Core simulation loop for fluids is implemented.
+    This is mostly done, with some bugs.
+  </li>
+  <li>
+    <b>Density Control: </b> Our simulation included a density control. This
+    adjusts the density, but does not affect the movement of the fluid.
+  </li>
+  <li>
+    <b>Particle Colorization</b>: We have not attempted gradient colorization of particles.
+  </li>
+</ul>
+
+<br>
+
+<h3>Links/Citations</h3>
+<ul>
+  <li>
+    <a href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
+    <p>
+      This is the core fluid simulation paper we referenced. We implementation the simulation loop>
+      and fluid constraints in this paper.
+    </p>
+  </li>
+  <li>
+    <a href="https://dl.acm.org/citation.cfm?id=1360647">https://dl.acm.org/citation.cfm?id=1360647</a>
+    <p>
+      We referenced this paper for assistance with implementing vorticity constraints. The paper "Position
+      Based Fluids" (above) referenced this paper in their vorticity constraint calculations.
+    </p>
+  </li>
+  <li>
+    <a href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf</a>
+    <p>
+      We used some of the kernels included in this link.
+    <p>
+  </li>
+</ul>
+
+<br>
+
+<h2>TODO: Scratch</h2>
+
+<h3>Video</h3>
+<h3>Slides</h3>
 
 <h4 align= "middle"> We initialized the water particles as a cube in 3-dimensional space </h4>
 <div align="middle">
@@ -39,23 +150,20 @@
           <figcaption align="middle">Water Particles in Box without lid</figcaption>
         </td>
         <td>
-          <img src="images/scene_images/b.png" align="right" width="500px"/> 
+          <img src="images/scene_images/b.png" align="right" width="500px"/>
           <figcaption align="middle">Water Particles in Box above a plane</figcaption>
         </td>
       </tr>
       <br>
       <tr>
         <td>
-          
+
         </td>
       </tr>
     </table>
   </div>
   <center><img src="images/scene_images/a.png" align="center" width="500px"/></center>
   <figcaption align="middle">Water Particles enclosed in Box</figcaption>
-
-<h3 align="middle"> Slides </h3>
-<h3 align="middle"> Video</h3>
 
 
 </body>
