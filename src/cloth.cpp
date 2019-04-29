@@ -88,7 +88,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
   for (PointMass &pm : point_masses) {
       pm.velocity += (pm.forces / mass) * delta_t;
       pm.predict_position = pm.position + delta_t * pm.velocity;
-
+      pm.last_position = pm.predict_position;
       // test
       assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
       assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
@@ -126,7 +126,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
       // Collision detection and response
-     std::cout << " \n plane "<< count_steps << " \n";
+//     std::cout << " \n plane "<< count_steps << " \n";
       
      
     }
@@ -156,8 +156,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     
 
     // Update vorticity
-    Vector3D force_vort = force_vorticity_i(pm);
-    pm.velocity += (force_vort / mass) * delta_t;
+//    Vector3D force_vort = force_vorticity_i(pm);
+//    pm.velocity += (force_vort / mass) * delta_t;
 
     assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
     assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
@@ -189,7 +189,7 @@ void Cloth::build_spatial_map() {
 
   // TODO (Part 4): Build a spatial map out of all of the point masses.
   for (PointMass &pm : point_masses) {
-      float hash_pos = hash_position(pm.position);
+      float hash_pos = hash_position(pm.last_position);
       if (map.find(hash_pos) == map.end()) {
           // Insert a new pair
           vector<PointMass *> *vect = new vector<PointMass *>();
@@ -215,7 +215,7 @@ double Cloth::calc_h() {
 
 
 Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
-  float hash_pos = hash_position(pm_i.position);
+  float hash_pos = hash_position(pm_i.last_position);
 
   // test
   if (isnan(hash_pos)) {
@@ -228,29 +228,23 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   Vector3D delta_p = Vector3D();
 
-  // Tensile instability
-  double k = 0.1;
-  int n = 4;
-  Vector3D delta_q = Vector3D(0.1*h, 0.2*h, 0.3*h);
-  Vector3D demon = spiky_kernel_grad()
-
-
-
-
-
   for (PointMass *neighbor : *neighbors) {
       if (neighbor == &pm_i) {
           continue;
       }
-      Vector3D neighborToPm = (pm_i.position - neighbor->position);
+      Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
       Vector3D term = spiky_kernel_grad(neighborToPm, h);
 
-      // test
-      if (isnan(term.x)) {
-          std::cout << "\nSpiky kernel x is nan for position = " << pm_i.position << "\n";
-      }
 
-      delta_p = delta_p + (pm_i.lambda + neighbor->lambda) * term;
+      // Tensile instability
+      double k = 0.1;
+      int n = 4;
+      Vector3D delta_q = Vector3D(0.1*h, 0.2*h, 0.3*h);
+      double denom = kernel_poly6(delta_q, h);
+      double numer = kernel_poly6(neighborToPm, h);
+      double s_corr = -k * pow(numer / denom, n);
+
+      delta_p = delta_p + (pm_i.lambda + neighbor->lambda + s_corr) * term;
 
       //s_coor
 
@@ -284,7 +278,7 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
 }
 
 double Cloth::calculate_density_neighbors(PointMass &pm) {
-  float hash_pos = hash_position(pm.position);
+  float hash_pos = hash_position(pm.last_position);
 
   // test
   if (isnan(hash_pos)) {
@@ -299,7 +293,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
       if (neighbor == &pm) {
           continue;
       }
-      Vector3D neighborToPm = (pm.position - neighbor->position);
+      Vector3D neighborToPm = (pm.predict_position - neighbor->predict_position);
       sum += kernel_poly6(neighborToPm, h);
   }
   return sum;
@@ -316,20 +310,22 @@ Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
 
 }
 
-Vector3D Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
+double Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
-  double operand = -pow(r,3)/(2*pow(h,3)) + pow(r,2) / pow(h,2) + h / (2*r) - 1;
 
-  if (0 <= r && r <= h) {
-    double mult = -15. / 2 / M_PI / pow(h,3);
-    return mult * operand;
-  }
-  return Vector3D(0);
+  return (45.0 / (M_PI * pow(h, 6))) * (h - r);
+//  double operand = -pow(r,3)/(2*pow(h,3)) + pow(r,2) / pow(h,2) + h / (2*r) - 1;
+//
+//  if (0 <= r && r <= h) {
+//    double mult = -15. / 2 / M_PI / pow(h,3);
+//    return mult * operand;
+//  }
+//  return Vector3D(0);
 
 }
 
 Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
-  float hash_pos = hash_position(pm_i.position);
+  float hash_pos = hash_position(pm_i.last_position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   double h = calc_h();
@@ -341,7 +337,7 @@ Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
         if (neighbor == &pm_i) {
             continue;
         } else{
-          Vector3D neighborToPm = (pm_i.position - neighbor->position);
+          Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
           sum += spiky_kernel_grad(neighborToPm, h);
 
         }
@@ -351,7 +347,7 @@ Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
 
   } else {
     // k = j
-    Vector3D pi_pk = (pm_i.position - pm_k.position);
+    Vector3D pi_pk = (pm_i.predict_position - pm_k.predict_position);
     return -1 * (1.0 / pm_i.rest_density) * spiky_kernel_grad(pi_pk, h);
   }
 
@@ -363,7 +359,7 @@ void Cloth::lambda_i(PointMass &pm) {
   double C_i = (rho_i / rho_o) - 1.0;
 
   double denom = 0.0;
-  float hash_pos = hash_position(pm.position);
+  float hash_pos = hash_position(pm.last_position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   for (PointMass *neighbor : *neighbors) {
@@ -379,7 +375,7 @@ void Cloth::lambda_i(PointMass &pm) {
 }
 
 Vector3D Cloth::vorticity_wi(PointMass &pm_i) {
-  float hash_pos = hash_position(pm_i.position);
+  float hash_pos = hash_position(pm_i.last_position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   double h = calc_h();
@@ -389,7 +385,7 @@ Vector3D Cloth::vorticity_wi(PointMass &pm_i) {
       if (neighbor == &pm_i) {
           continue;
       } else {
-        Vector3D neighborToPm = (pm_i.position - neighbor->position);
+        Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
         w_i += cross((pm_i.velocity - neighbor->velocity), (spiky_kernel_grad(neighborToPm, h)));
       }
   }
@@ -400,17 +396,17 @@ Vector3D Cloth::vorticity_wi(PointMass &pm_i) {
 Vector3D Cloth::location_vector(PointMass &pm_i) {
   // note: uses Bubbles Alive, Hong et al [2008]
 
-  float hash_pos = hash_position(pm_i.position);
+  float hash_pos = hash_position(pm_i.last_position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   double h = calc_h();
 
   Vector3D p_pos_sum = Vector3D();
   for (PointMass *neighbor : *neighbors) {
-    p_pos_sum += neighbor->position;
+    p_pos_sum += neighbor->predict_position;
   }
 
-  Vector3D n = p_pos_sum / (neighbors->size() + epsilon) - pm_i.position;
+  Vector3D n = p_pos_sum / (neighbors->size() + epsilon) - pm_i.predict_position;
 
   n.normalize();
 
@@ -432,7 +428,7 @@ Vector3D Cloth::force_vorticity_i(PointMass &pm_i) {
 void Cloth::viscosity_constraint(PointMass &pm_i) {
   double c = 0.01;
 
-  float hash_pos = hash_position(pm_i.position);
+  float hash_pos = hash_position(pm_i.last_position);
   auto getter = map.find(hash_pos);
   vector<PointMass *> *neighbors = getter->second;
   double h = calc_h();
@@ -442,59 +438,68 @@ void Cloth::viscosity_constraint(PointMass &pm_i) {
       if (neighbor == &pm_i) {
           continue;
       } else {
-        Vector3D neighborToPm = (pm_i.position - neighbor->position);
-        viscosity_sum += cross((pm_i.velocity - neighbor->velocity), viscosity_kernel(neighborToPm, h));
+        Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
+        double visc_kernel = viscosity_kernel(neighborToPm, h);
+          std::cout << "Distance between neighbors = " << neighborToPm.norm() << std::endl;
+        std::cout << "Viscosity kernel = " << visc_kernel << std::endl;
+        viscosity_sum += (pm_i.velocity - neighbor->velocity) * visc_kernel;
       }
   }
-
+  std::cout << "Velocity before update = " << pm_i.velocity << std::endl;
   pm_i.velocity = pm_i.velocity + c*viscosity_sum;
+    std::cout << "Velocity after update = " << pm_i.velocity << std::endl;
 }
 
 // #######################################
 
 
-void Cloth::self_collide(PointMass &pm, double simulation_steps) {
-  // TODO (Part 4): Handle self-collision for a given point mass.
-  if (pm.pinned) {
-      return;
-  }
-
-  float hash_pos = hash_position(pm.position);
-  auto getter = map.find(hash_pos);
-  vector<PointMass *> *neighbors = getter->second;
-  Vector3D totalCorrection = Vector3D(0,0,0);
-  int num_corrections = 0;
-
-  for (PointMass *neighbor : *neighbors) {
-      if (neighbor == &pm) {
-          continue;
-      }
-      Vector3D neighborToPm = (pm.position - neighbor->position);
-      float dist = neighborToPm.norm();
-      neighborToPm.normalize();
-      if (dist < 2 * thickness) {
-          Vector3D corrected = neighbor->position + (2 * thickness)*neighborToPm;
-          Vector3D correction = corrected - pm.position;
-          totalCorrection += correction;
-          num_corrections += 1;
-      }
-  }
-
-  if (num_corrections > 0) {
-      totalCorrection /= (num_corrections * simulation_steps);
-      pm.position += totalCorrection;
-  }
-}
+//void Cloth::self_collide(PointMass &pm, double simulation_steps) {
+//  // TODO (Part 4): Handle self-collision for a given point mass.
+//  if (pm.pinned) {
+//      return;
+//  }
+//
+//  float hash_pos = hash_position(pm.position);
+//  auto getter = map.find(hash_pos);
+//  vector<PointMass *> *neighbors = getter->second;
+//  Vector3D totalCorrection = Vector3D(0,0,0);
+//  int num_corrections = 0;
+//
+//  for (PointMass *neighbor : *neighbors) {
+//      if (neighbor == &pm) {
+//          continue;
+//      }
+//      Vector3D neighborToPm = (pm.position - neighbor->position);
+//      float dist = neighborToPm.norm();
+//      neighborToPm.normalize();
+//      if (dist < 2 * thickness) {
+//          Vector3D corrected = neighbor->position + (2 * thickness)*neighborToPm;
+//          Vector3D correction = corrected - pm.position;
+//          totalCorrection += correction;
+//          num_corrections += 1;
+//      }
+//  }
+//
+//  if (num_corrections > 0) {
+//      totalCorrection /= (num_corrections * simulation_steps);
+//      pm.position += totalCorrection;
+//  }
+//}
 
 float Cloth::hash_position(Vector3D pos) {
   // TODO (Part 4): Hash a 3D position into a unique float identifier that represents membership in some 3D box volume.
-  double w = 3 * width / num_width_points;
-  double h = 3 * height / num_height_points;
-  double d = 3 * depth / num_depth_points;
-  //double t = max(w, h, d);
-  Vector3D truncated = Vector3D((pos.x - fmod(pos.x, w)) / w, (pos.y - fmod(pos.y, h)) / h, (pos.z - fmod(pos.z, d)) / d);
-  float hash_value = truncated.x * pow(3, 3) + truncated.y * pow(3, 2) + truncated.z * pow(3, 1);
+  double s = 1.0 / pow(num_width_points * num_height_points * num_depth_points, 1.0/3.0);
+  Vector3D hash_indices = Vector3D(floor(pos.x / s), floor(pos.y / s), floor(pos.z / s));
+  float hash_value = hash_indices.x * pow(3, 3) + hash_indices.y * pow(3, 2) + hash_indices.z * pow(3, 1);
   return hash_value;
+
+//  double w = 3 * width / num_width_points;
+//  double h = 3 * height / num_height_points;
+//  double d = 3 * depth / num_depth_points;
+//  //double t = max(w, h, d);
+//  Vector3D truncated = Vector3D((pos.x - fmod(pos.x, w)) / w, (pos.y - fmod(pos.y, h)) / h, (pos.z - fmod(pos.z, d)) / d);
+//  float hash_value = truncated.x * pow(3, 3) + truncated.y * pow(3, 2) + truncated.z * pow(3, 1);
+//  return hash_value;
 }
 
 ///////////////////////////////////////////////////////
@@ -505,6 +510,7 @@ void Cloth::reset() {
   PointMass *pm = &point_masses[0];
   for (int i = 0; i < point_masses.size(); i++) {
     pm->position = pm->start_position;
+    pm->predict_position = pm->start_position;
     pm->last_position = pm->start_position;
     pm++;
   }

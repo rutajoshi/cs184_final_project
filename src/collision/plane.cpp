@@ -13,9 +13,10 @@ using namespace CGL;
 
 void Plane::collide(PointMass &pm) {
   // TODO (Part 3): Handle collisions with planes.
+  Vector3D inter_position = pm.predict_position - pm.delta_position;
 
   double t_pos = dot(point - pm.predict_position, normal) / dot(-normal, normal);
-  double t_lastpos = dot(point - pm.position, normal) / dot(-normal, normal);
+  double t_lastpos = dot(point - inter_position, normal) / dot(-normal, normal);
 
   // then the points are on opposite sides of the plane
   if (t_pos * t_lastpos <= 0) {
@@ -27,8 +28,8 @@ void Plane::collide(PointMass &pm) {
         Vector3D tangentPoint = pm.predict_position + t_pos * (normal);
         correctionPoint = tangentPoint - SURFACE_OFFSET * normal;
       }
-      Vector3D correction = correctionPoint - pm.position;
-      pm.predict_position = pm.position + (1 - friction) * correction;
+      Vector3D correction = correctionPoint - inter_position;
+      pm.predict_position = inter_position + (1 - friction) * correction;
       
   }
 }
