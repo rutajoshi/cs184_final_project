@@ -4,12 +4,16 @@ uniform vec4 u_color;
 
 in vec4 v_position;
 in vec4 v_normal;
+in float out_vertex;
 
 out vec4 out_color;
 
 void main() {
   vec2 pt = gl_PointCoord - vec2(0.5);
-  if(pt.x*pt.x+pt.y*pt.y > 0.25)
+  if(out_vertex == 1.0 && pt.x*pt.x+pt.y*pt.y > 0.25)
       discard;
-  out_color = vec4(0, 0, 1, 1);
+  if(out_vertex == 1.0) 
+  	out_color = vec4(0, 0, 1, 1);
+  if(out_vertex != 1.0) 
+  	out_color = u_color;
 }

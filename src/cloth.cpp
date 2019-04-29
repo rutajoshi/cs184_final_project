@@ -93,7 +93,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
       assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
       assert(!isnan(pm.velocity.z) && !isinf(pm.velocity.z));
-      
+
 
       assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
       assert(!isnan(pm.predict_position.y) && !isinf(pm.predict_position.y));
@@ -109,7 +109,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // test
       assert(!isnan(pm.lambda) && !isinf(pm.lambda));
-      
+
     }
 
 
@@ -127,8 +127,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // Collision detection and response
 //     std::cout << " \n plane "<< count_steps << " \n";
-      
-     
+
+
     }
     // assert(count_steps < 27499);
 
@@ -153,7 +153,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
     assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
     assert(!isnan(pm.velocity.z) && !isinf(pm.velocity.z));
-    
+
 
     // Update vorticity
 //    Vector3D force_vort = force_vorticity_i(pm);
@@ -228,6 +228,12 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   Vector3D delta_p = Vector3D();
 
+  // Tensile instability constants
+  double k = 0.1;
+  int n = 4;
+  Vector3D delta_q = Vector3D(0.03, 0.03, 0.03);
+  double denom = kernel_poly6(delta_q, h);
+
   for (PointMass *neighbor : *neighbors) {
       if (neighbor == &pm_i) {
           continue;
@@ -236,32 +242,11 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
       Vector3D term = spiky_kernel_grad(neighborToPm, h);
 
 
-      // Tensile instability
-      double k = 0.1;
-      int n = 4;
-      Vector3D delta_q = Vector3D(0.1*h, 0.2*h, 0.3*h);
-      double denom = kernel_poly6(delta_q, h);
+      // Tensile instability calculations
       double numer = kernel_poly6(neighborToPm, h);
       double s_corr = -k * pow(numer / denom, n);
 
       delta_p = delta_p + (pm_i.lambda + neighbor->lambda + s_corr) * term;
-
-      //s_coor
-
-
-      // test
-      if (isnan(pm_i.lambda)) {
-          std::cout << "\nLambda is nan for position = " << pm_i.position << "\n";
-      }
-      // test
-      if (isnan(neighbor->lambda)) {
-          std::cout << "\nNeighbor lambda is nan for position = " << pm_i.position << "\n";
-      }
-
-      // test
-      if (isnan(delta_p.y)) {
-          std::cout << "\nDelta position is nan for position = " << pm_i.position << "\n";
-      }
   }
   delta_p = (1.0 / pm_i.rest_density) * delta_p;
   return delta_p;
@@ -271,9 +256,11 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   if (0 <= r && r <= h) {
+    assert(r <= h);
     double mult = pow((pow(h,2) - pow(r,2)), 3);
     return 315. / 64. / M_PI / pow(h,9) * mult;
   }
+  assert(r > h);
   return 0;
 }
 
@@ -301,26 +288,25 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
 
 Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
-  pos_dif.normalize();
   if (0 <= r && r <= h) {
-    double mult = -45. /M_PI / pow(h,6) * pow((h - r), 2);
+    double mult = 15. /M_PI / pow(h,6) * pow((h - r), 3);
+    mult /= r;
+
     return mult * pos_dif;
   }
+  assert(r > h);
   return Vector3D(0);
 
 }
 
 double Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
-
-  return (45.0 / (M_PI * pow(h, 6))) * (h - r);
-//  double operand = -pow(r,3)/(2*pow(h,3)) + pow(r,2) / pow(h,2) + h / (2*r) - 1;
-//
-//  if (0 <= r && r <= h) {
-//    double mult = -15. / 2 / M_PI / pow(h,3);
-//    return mult * operand;
-//  }
-//  return Vector3D(0);
+  if (0 <= r && r <= h) {
+    double mult = 45.0 / M_PI / pow(h, 6) * (h - r);
+    return  mult;
+  }
+  assert( r > h);
+  return Vector3D(0);
 
 }
 

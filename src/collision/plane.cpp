@@ -30,12 +30,11 @@ void Plane::collide(PointMass &pm) {
       }
       Vector3D correction = correctionPoint - inter_position;
       pm.predict_position = inter_position + (1 - friction) * correction;
-      
+
   }
 }
 
 void Plane::render(GLShader &shader) {
-  return;
   nanogui::Color color(0.7f, 0.7f, 0.7f, 1.0f);
 
   Vector3f sPoint(point.x, point.y, point.z);
@@ -47,6 +46,7 @@ void Plane::render(GLShader &shader) {
 
   MatrixXf positions(3, 4);
   MatrixXf normals(3, 4);
+  MatrixXf vert(1, 4);
 
   positions.col(0) << sPoint + 2 * (sCross + sParallel);
   positions.col(1) << sPoint + 2 * (sCross - sParallel);
@@ -57,6 +57,11 @@ void Plane::render(GLShader &shader) {
   normals.col(1) << sNormal;
   normals.col(2) << sNormal;
   normals.col(3) << sNormal;
+
+  for (int i = 0; i < 4 ; i++) {
+    vert.col(i) << 0.0;
+  }
+  shader.uploadAttrib("is_vertex", vert);
 
   if (shader.uniform("u_color", false) != -1) {
     shader.setUniform("u_color", color);
@@ -69,6 +74,7 @@ void Plane::render(GLShader &shader) {
   shader.drawArray(GL_TRIANGLE_STRIP, 0, 4);
 #ifdef LEAK_PATCH_ON
   shader.freeAttrib("in_position");
+  shader.freeAttrib("is_vertex");
   if (shader.attrib("in_normal", false) != -1) {
     shader.freeAttrib("in_normal");
   }
