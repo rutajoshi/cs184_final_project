@@ -47,15 +47,28 @@ void Plane::render(GLShader &shader) {
                      normal.x - normal.y);
   sParallel.normalize();
   Vector3f sCross = sNormal.cross(sParallel);
+  sCross.normalize();
 
   MatrixXf positions(3, 4);
   MatrixXf normals(3, 4);
   MatrixXf vert(1, 4);
 
-  positions.col(0) << sPoint + 2 * (sCross + sParallel);
-  positions.col(1) << sPoint + 2 * (sCross - sParallel);
-  positions.col(2) << sPoint + 2 * (-sCross + sParallel);
-  positions.col(3) << sPoint + 2 * (-sCross - sParallel);
+  Vector3f top = sPoint + 1 * (sCross);
+  Vector3f bot = sPoint + 1 * (- sParallel);
+  Vector3f lef = sPoint + 1 * (sParallel);
+  Vector3f rig = sPoint + 1 * (-sCross );
+
+  // top.normalize();
+  // bot.normalize();
+  // lef.normalize();
+  // rig.normalize();
+
+
+
+  positions.col(0) << top;
+  positions.col(1) << bot;
+  positions.col(2) << lef;
+  positions.col(3) << rig;
 
   normals.col(0) << sNormal;
   normals.col(1) << sNormal;
