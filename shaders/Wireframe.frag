@@ -15,5 +15,5 @@ void main() {
   if(out_vertex == 1.0) 
   	out_color = vec4(0, 0, 1, 1);
   if(out_vertex != 1.0) 
-  	out_color = u_color;
+  	out_color = vec4(.4,0,0,.1);
 }

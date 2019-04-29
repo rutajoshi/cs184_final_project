@@ -114,30 +114,20 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
     for (PointMass &pm : point_masses) {
-      pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
+        pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
+        for (CollisionObject* c : *collision_objects){
+            c->collide(pm);
+        }
 
-      // test
-      assert(!isnan(pm.delta_position.z) && !isinf(pm.delta_position.z));
-      assert(!isnan(pm.delta_position.x) && !isinf(pm.delta_position.x));
-      assert(!isnan(pm.delta_position.y) && !isinf(pm.delta_position.y));
-      // if (count_steps > 27497) {
-        // std::cout << "\n" << pm.delta_position << "\n";
-      // }
-
-
-      // Collision detection and response
-//     std::cout << " \n plane "<< count_steps << " \n";
-
-
+        // test
+        assert(!isnan(pm.delta_position.z) && !isinf(pm.delta_position.z));
+        assert(!isnan(pm.delta_position.x) && !isinf(pm.delta_position.x));
+        assert(!isnan(pm.delta_position.y) && !isinf(pm.delta_position.y));
     }
-    // assert(count_steps < 27499);
 
     for (PointMass &pm : point_masses) {
       // Update predicted positions
       pm.predict_position += pm.delta_position;
-      for (CollisionObject* c : *collision_objects){
-        c->collide(pm);
-      }
 
       // test
       assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
@@ -145,7 +135,6 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
       assert(!isnan(pm.predict_position.z) && !isinf(pm.predict_position.z));
     }
   }
-  // assert(count_steps < 27499);
 
   for (PointMass &pm : point_masses) {
     // Update velocity
@@ -306,8 +295,7 @@ double Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
     return  mult;
   }
   assert( r > h);
-  return Vector3D(0);
-
+  return 0.0;
 }
 
 Vector3D Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
