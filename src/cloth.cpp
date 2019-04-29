@@ -228,6 +228,16 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
   Vector3D delta_p = Vector3D();
 
+  // Tensile instability
+  double k = 0.1;
+  int n = 4;
+  Vector3D delta_q = Vector3D(0.1*h, 0.2*h, 0.3*h);
+  Vector3D demon = spiky_kernel_grad()
+
+
+
+
+
   for (PointMass *neighbor : *neighbors) {
       if (neighbor == &pm_i) {
           continue;
@@ -241,6 +251,9 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
       }
 
       delta_p = delta_p + (pm_i.lambda + neighbor->lambda) * term;
+
+      //s_coor
+
 
       // test
       if (isnan(pm_i.lambda)) {
