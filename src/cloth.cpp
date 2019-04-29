@@ -127,7 +127,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
-            // self_collide(pm, simulation_steps);
+            self_collide(pm, simulation_steps);
             assert(check_vector(pm.predict_position));
         }
 
@@ -263,7 +263,7 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
     double r = pos_dif.norm();
     assert(!isnan(r));
     assert(!isinf(r));
-    
+
     if (0 <= r && r <= h) {
         assert(r <= h);
         double mult = pow((pow(h,2) - pow(r,2)), 3);
@@ -309,19 +309,19 @@ Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
 
         return mult * pos_dif;
     }
-    if (r <= h) {
-        assert(r == 0);
-        std::cout << "\n spiky_kernel_grad r= " << r<<" h = " <<h<<"\n"; 
-    } else{
-        // bool f = r <= h
-        // std::cout << "\n r<= h" << (r <=h) << " r> h " << (r > h)<<"\n";
-        if (!(r > h)) {
-            std::cout << "\n spiky_kernel_grad pos_dif " << pos_dif<<"\n"; 
-            std::cout << "\n spiky_kernel_grad r= " << r<<" h = " <<h<<"\n"; 
+    // if (r <= h) {
+    //     assert(r == 0);
+    //     std::cout << "\n spiky_kernel_grad r= " << r<<" h = " <<h<<"\n"; 
+    // } else{
+    //     // bool f = r <= h
+    //     // std::cout << "\n r<= h" << (r <=h) << " r> h " << (r > h)<<"\n";
+    //     if (!(r > h)) {
+    //         std::cout << "\n spiky_kernel_grad pos_dif " << pos_dif<<"\n"; 
+    //         std::cout << "\n spiky_kernel_grad r= " << r<<" h = " <<h<<"\n"; 
 
-        }
-        assert(r > h);
-    }
+    //     }
+    //     assert(r > h);
+    // }
     return Vector3D(0);
 
 }
@@ -500,19 +500,48 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
             continue;
         }
         Vector3D neighborToPm = (pm.predict_position - neighbor->predict_position);
+        assert(check_vector(neighborToPm));
         float dist = neighborToPm.norm();
+
+        assert(check_vector(neighborToPm));
+
+        /// Problem if both of the partilces are in the same location
+        if (dist == 0) {
+            double small_e = 0.00001;
+            // Vector3D offset = Vector3D(small_e, small_e, small_e);
+            // neighborToPm += offset;
+            neighborToPm = Vector3D();
+            neighborToPm.x = totalCorrection.x + small_e;
+            neighborToPm.y = totalCorrection.y + small_e;
+            neighborToPm.z = totalCorrection.z + small_e;
+        } 
+        
         neighborToPm.normalize();
+        assert(check_vector(neighborToPm));
+    
+        // std::cout <<"\n before norm " << neighborToPm << "\n";
+        
+        // std::cout <<"\n after norm " << neighborToPm << "\n";
+        
         if (dist < 2 * thickness) {
+            assert(check_vector(neighbor->predict_position));
+            assert(!isnan(thickness));
             Vector3D corrected = neighbor->predict_position + (2 * thickness)*neighborToPm;
+            assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
+            assert(check_vector(correction));
             totalCorrection += correction;
             num_corrections += 1;
         }
     }
 
     if (num_corrections > 0) {
+        assert(check_vector(totalCorrection));
         totalCorrection /= (num_corrections * simulation_steps);
+        assert(check_vector(totalCorrection));
+        assert(check_vector(pm.predict_position));
         pm.predict_position += totalCorrection;
+        assert(check_vector(pm.predict_position));
     }
 }
 
