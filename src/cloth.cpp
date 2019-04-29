@@ -161,10 +161,10 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
         // Update vorticity
-//    Vector3D force_vort = force_vorticity_i(pm);
-//    pm.velocity += (force_vort / mass) * delta_t;
+        Vector3D force_vort = force_vorticity_i(pm);
+        pm.velocity += (force_vort / mass) * delta_t;
 
-        // assert(check_vector(pm.velocity));
+        assert(check_vector(pm.velocity));
 
         // Update viscosity (happens in place)
         viscosity_constraint(pm);
@@ -515,7 +515,7 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
             neighborToPm.y = totalCorrection.y + small_e;
             neighborToPm.z = totalCorrection.z + small_e;
         } 
-        
+
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
     
