@@ -62,8 +62,10 @@ void Cloth::buildGrid() {
                 }
                 //vector<int> rc{ r, c };
                 bool pinnedPoint = false;
-
-                point_masses.push_back(PointMass(pos, pinnedPoint));
+                PointMass pm = PointMass(pos, pinnedPoint);
+                // NOTE: density is from pinned2.json
+                pm.mass = width * height * depth * 150.0 / num_width_points / num_height_points / num_depth_points;
+                point_masses.push_back(pm);
             }
         }
     }
@@ -72,10 +74,10 @@ void Cloth::buildGrid() {
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
                      vector<Vector3D> external_accelerations,
                      vector<CollisionObject *> *collision_objects) {
-    double mass = width * height * cp->density / num_width_points / num_height_points / num_depth_points;
+    double mass = width * height * depth * cp->density / num_width_points / num_height_points / num_depth_points;
     double delta_t = 1.0f / frames_per_sec / simulation_steps;
     count_steps += 1;
-    std::cout<<"\n on sim  "<<count_steps <<"\n";
+//    std::cout<<"\n on sim  "<<count_steps <<"\n";
 
     Vector3D total_ext_force = Vector3D(0,0,0);
     for (int i = 0; i < external_accelerations.size(); i++) {
@@ -83,7 +85,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     }
 
     for (PointMass &pm : point_masses) {
-        pm.forces = total_ext_force;
+        pm.forces += total_ext_force;
     }
 
     for (PointMass &pm : point_masses) {
@@ -109,7 +111,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
             lambda_i(pm);
 
             // test
-            assert(!isnan(pm.lambda) && !isinf(pm.lambda));
+            assert(!isnan(pm.lambda));
+            assert(!isinf(pm.lambda));
 
         }
 
@@ -453,7 +456,7 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         float dist = neighborToPm.norm();
         neighborToPm.normalize();
         if (dist < 2 * thickness) {
-            Vector3D corrected = neighbor->predict_position + (10 * thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (2 * thickness)*neighborToPm;
             Vector3D correction = corrected - pm.predict_position;
             totalCorrection += correction;
             num_corrections += 1;

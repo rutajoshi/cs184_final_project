@@ -29,6 +29,7 @@ struct PointMass {
   Vector3D velocity;
   Vector3D forces;
   Vector3D delta_position;
+  double mass;
   double lambda = 0.0;
 
   // mesh reference
