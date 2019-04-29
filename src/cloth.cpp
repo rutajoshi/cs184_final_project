@@ -231,7 +231,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
   // Tensile instability
   double k = 0.1;
   int n = 4;
-  Vector3D delta_q = Vector3D(0.1*h, 0.2*h, 0.3*h);
+  Vector3D delta_q = Vector3D(0.03, 0.03, 0.03);
   double demon = kernel_poly6(delta_q, h);
 
 
@@ -299,7 +299,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
 Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   if (0 <= r && r <= h) {
-    double mult = -45. /M_PI / pow(h,6) * pow((h - r), 2);
+    double mult = 15. /M_PI / pow(h,6) * pow((h - r), 3);
     mult /= r;
 
     return mult * pos_dif;
