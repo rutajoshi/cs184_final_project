@@ -91,8 +91,13 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // test
       assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
-      assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
+      assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
+      assert(!isnan(pm.velocity.z) && !isinf(pm.velocity.z));
+      
 
+      assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
+      assert(!isnan(pm.predict_position.y) && !isinf(pm.predict_position.y));
+      assert(!isnan(pm.predict_position.z) && !isinf(pm.predict_position.z));
   }
 
 
@@ -136,6 +141,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
       // test
       assert(!isnan(pm.predict_position.x) && !isinf(pm.predict_position.x));
+      assert(!isnan(pm.predict_position.y) && !isinf(pm.predict_position.y));
+      assert(!isnan(pm.predict_position.z) && !isinf(pm.predict_position.z));
     }
   }
   // assert(count_steps < 27499);
@@ -144,6 +151,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     // Update velocity
     pm.velocity = (1.0 / delta_t) * (pm.predict_position - pm.position);
     assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
+    assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
+    assert(!isnan(pm.velocity.z) && !isinf(pm.velocity.z));
     
 
     // Update vorticity
@@ -151,16 +160,22 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     pm.velocity += (force_vort / mass) * delta_t;
 
     assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
+    assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
+    assert(!isnan(pm.velocity.z) && !isinf(pm.velocity.z));
 
     // Update viscosity (happens in place)
-    // viscosity_constraint(pm);
+    viscosity_constraint(pm);
     assert(!isnan(pm.velocity.x) && !isinf(pm.velocity.x));
+    assert(!isnan(pm.velocity.y) && !isinf(pm.velocity.y));
+    assert(!isnan(pm.velocity.z) && !isinf(pm.velocity.z));
 
     // Update position
     pm.position = pm.predict_position;
 
     // test
+    assert(!isnan(pm.position.x) && !isinf(pm.position.x));
     assert(!isnan(pm.position.y) && !isinf(pm.position.y));
+    assert(!isnan(pm.position.z) && !isinf(pm.position.z));
   }
 
 }
