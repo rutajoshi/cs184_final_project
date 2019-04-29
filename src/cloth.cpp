@@ -232,7 +232,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
   double k = 0.1;
   int n = 4;
   Vector3D delta_q = Vector3D(0.1*h, 0.2*h, 0.3*h);
-  Vector3D demon = spiky_kernel_grad()
+  double demon = kernel_poly6(delta_q, h);
 
 
 
@@ -245,29 +245,18 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
       Vector3D neighborToPm = (pm_i.position - neighbor->position);
       Vector3D term = spiky_kernel_grad(neighborToPm, h);
 
-      // test
-      if (isnan(term.x)) {
-          std::cout << "\nSpiky kernel x is nan for position = " << pm_i.position << "\n";
-      }
+      
 
-      delta_p = delta_p + (pm_i.lambda + neighbor->lambda) * term;
+  
 
       //s_coor
+      double numer = kernel_poly6(neighborToPm, h);
+      double s_coor = - k * pow((numer /demon), n);
+
+      delta_p = delta_p + (pm_i.lambda + neighbor->lambda + s_coor) * term;
 
 
-      // test
-      if (isnan(pm_i.lambda)) {
-          std::cout << "\nLambda is nan for position = " << pm_i.position << "\n";
-      }
-      // test
-      if (isnan(neighbor->lambda)) {
-          std::cout << "\nNeighbor lambda is nan for position = " << pm_i.position << "\n";
-      }
 
-      // test
-      if (isnan(delta_p.y)) {
-          std::cout << "\nDelta position is nan for position = " << pm_i.position << "\n";
-      }
   }
   delta_p = (1.0 / pm_i.rest_density) * delta_p;
   return delta_p;
@@ -277,9 +266,11 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
   if (0 <= r && r <= h) {
+    assert(r <= h);
     double mult = pow((pow(h,2) - pow(r,2)), 3);
     return 315. / 64. / M_PI / pow(h,9) * mult;
   }
+  assert(r > h);
   return 0;
 }
 
@@ -307,23 +298,26 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
 
 Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
-  pos_dif.normalize();
   if (0 <= r && r <= h) {
     double mult = -45. /M_PI / pow(h,6) * pow((h - r), 2);
+    mult /= r;
+
     return mult * pos_dif;
   }
+  assert(r > h);
   return Vector3D(0);
 
 }
 
 Vector3D Cloth::viscosity_kernel(Vector3D pos_dif, double h) {
   double r = pos_dif.norm();
-  double operand = -pow(r,3)/(2*pow(h,3)) + pow(r,2) / pow(h,2) + h / (2*r) - 1;
+  // double operand = -pow(r,3)/(2*pow(h,3)) + pow(r,2) / pow(h,2) + h / (2*r) - 1;
 
   if (0 <= r && r <= h) {
-    double mult = -15. / 2 / M_PI / pow(h,3);
-    return mult * operand;
+    // double mult = -15. / 2 / M_PI / pow(h,3);
+    return  45.0 / M_PI / pow(h, 6) * (h - r);
   }
+  assert( r > h);
   return Vector3D(0);
 
 }
