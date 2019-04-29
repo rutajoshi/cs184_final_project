@@ -1,1 +1,1 @@
-# Assignment 4: Cloth Simulation
+# CS 184 Final Project: Fluid Simulation
