@@ -33,7 +33,6 @@ void Plane::collide(PointMass &pm) {
 
       double new_t_pos = dot(point - pm.predict_position, normal) / dot(-normal, normal);
       double new_t_lastpos = dot(point - inter_position, normal) / dot(-normal, normal);
-      //double new_t_actualpos = dot(point - pm.position, normal) / dot(-normal, normal);
       assert(new_t_pos * new_t_lastpos >= 0);
   }
 }

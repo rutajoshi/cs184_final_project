@@ -414,14 +414,14 @@ void Cloth::viscosity_constraint(PointMass &pm_i) {
       } else {
         Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
         double visc_kernel = viscosity_kernel(neighborToPm, h);
-          std::cout << "Distance between neighbors = " << neighborToPm.norm() << std::endl;
-        std::cout << "Viscosity kernel = " << visc_kernel << std::endl;
+//          std::cout << "Distance between neighbors = " << neighborToPm.norm() << std::endl;
+//        std::cout << "Viscosity kernel = " << visc_kernel << std::endl;
         viscosity_sum += (pm_i.velocity - neighbor->velocity) * visc_kernel;
       }
   }
-  std::cout << "Velocity before update = " << pm_i.velocity << std::endl;
+//  std::cout << "Velocity before update = " << pm_i.velocity << std::endl;
   pm_i.velocity = pm_i.velocity + c*viscosity_sum;
-    std::cout << "Velocity after update = " << pm_i.velocity << std::endl;
+//    std::cout << "Velocity after update = " << pm_i.velocity << std::endl;
 }
 
 // #######################################
