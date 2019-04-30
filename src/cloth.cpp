@@ -122,7 +122,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     build_spatial_map();
 
     // For some number of iterations, do logic to update the predicted position
-    for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < 2; j++) {
         // For each particle, calculate lambda_i
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
@@ -528,7 +528,7 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         if (dist < 10 * thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
-            Vector3D corrected = neighbor->predict_position + (10 * thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (100 * thickness)*neighborToPm;
             assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
             assert(check_vector(correction));
