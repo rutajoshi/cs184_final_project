@@ -10,6 +10,8 @@
 
 using namespace std;
 
+#define BOUNCE_DAMPING_FACTOR 0.9
+
 static int count_steps;
 
 bool check_vector(Vector3D vec) {
@@ -77,7 +79,7 @@ void Cloth::buildGrid() {
                 bool pinnedPoint = false;
                 PointMass pm = PointMass(pos, pinnedPoint);
                 // NOTE: density is from pinned2.json
-                pm.mass = width * height * depth * 150.0 / num_width_points / num_height_points / num_depth_points;
+                pm.mass = width * height * depth * 1000 / num_width_points / num_height_points / num_depth_points;
                 point_masses.push_back(pm);
             }
         }
@@ -106,8 +108,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         pm.velocity += (pm.forces / mass) * delta_t;
         if (pm.collision_forces.norm() != 0) {
             // Remove collision forces from the last iteration so they only apply for one time step
-            pm.forces -= pm.collision_forces;
-            pm.collision_forces = Vector3D(0,0,0);
+            pm.collision_forces *= BOUNCE_DAMPING_FACTOR;
         }
         pm.predict_position = pm.position + delta_t * pm.velocity;
         // Set the last position to the current predicted position for use in hashing to find neighbors
@@ -124,39 +125,44 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     // For some number of iterations, do logic to update the predicted position
     for (int j = 0; j < 2; j++) {
         // For each particle, calculate lambda_i
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            lambda_i(pm);
-            assert(check_vector(pm.predict_position));
+//        for (PointMass &pm : point_masses) {
+//            assert(check_vector(pm.predict_position));
+//            lambda_i(pm);
+//            assert(check_vector(pm.predict_position));
+//
+//            // validity check the lambda
+//            assert(!isnan(pm.lambda));
+//            assert(!isinf(pm.lambda));
+//
+//        }
 
-            // validity check the lambda
-            assert(!isnan(pm.lambda));
-            assert(!isinf(pm.lambda));
-
-        }
-
-        // For each particle, deal with self-collisions (repel it from other point masses)
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            self_collide(pm, simulation_steps);
-            assert(check_vector(pm.predict_position));
-        }
+//        // For each particle, deal with self-collisions (repel it from other point masses)
+//        for (PointMass &pm : point_masses) {
+//            assert(check_vector(pm.predict_position));
+//            self_collide(pm, simulation_steps);
+//            assert(check_vector(pm.predict_position));
+//        }
 
         // For each particle, calculate delta position and do collision detection/response
         for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
+//            assert(check_vector(pm.predict_position));
+//            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
             // Collide with all collision objects
             for (CollisionObject* c : *collision_objects){
                 c->collide(pm);
             }
 
+            pm.forces = pm.collision_forces;
+
             // If there are no collision objects, zero out the forces so that you don't apply gravity twice in
             // the next loop
-            if (collision_objects->size() == 0) {
-                pm.forces = Vector3D(0,0,0);
-            }
+//            if (collision_objects->size() == 0) {
+//                pm.forces = Vector3D(0,0,0);
+//            }
+
+//            std::cout << "Updated forces = " << pm.forces << "\n";
+
             assert(check_vector(pm.predict_position));
 
             // test
@@ -165,13 +171,13 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         }
 
         // For each particle, update the predicted position using delta position
-        for (PointMass &pm : point_masses) {
-            // Update predicted positions
-            pm.predict_position += pm.delta_position;
-
-            // validity test the predicted positions
-            assert(check_vector(pm.predict_position));
-        }
+//        for (PointMass &pm : point_masses) {
+//            // Update predicted positions
+//            pm.predict_position += pm.delta_position;
+//
+//            // validity test the predicted positions
+//            assert(check_vector(pm.predict_position));
+//        }
     }
 
     for (PointMass &pm : point_masses) {
@@ -182,14 +188,14 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
         // Update vorticity
-        Vector3D force_vort = force_vorticity_i(pm);
-        pm.velocity += (force_vort / mass) * delta_t;
-
-        assert(check_vector(pm.velocity));
-
-        // Update viscosity (happens in place)
-        viscosity_constraint(pm);
-        assert(check_vector(pm.velocity));
+//        Vector3D force_vort = force_vorticity_i(pm);
+//        pm.velocity += (force_vort / mass) * delta_t;
+//
+//        assert(check_vector(pm.velocity));
+//
+//        // Update viscosity (happens in place)
+//        viscosity_constraint(pm);
+//        assert(check_vector(pm.velocity));
 
         // Update position
         pm.position = pm.predict_position;
