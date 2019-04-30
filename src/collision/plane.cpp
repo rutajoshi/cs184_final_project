@@ -42,7 +42,7 @@ void Plane::collide(PointMass &pm) {
       pm.num_collisions += 1;
       double cos_theta = dot(-pm.velocity, normal) / pm.velocity.norm();
       double theta = acos(cos_theta);
-      double delta_t = 1.0f / 90;
+      double delta_t = 1.0f / 90; // 0.016; //
       Vector3D normal_force = (-2 * pm.mass * pm.velocity * cos_theta / delta_t);
       pm.collision_forces += normal_force;
   }
