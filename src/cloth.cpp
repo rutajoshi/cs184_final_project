@@ -181,15 +181,15 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         assert(check_vector(pm.velocity));
 
 
-//        // Update vorticity
-//        Vector3D force_vort = force_vorticity_i(pm);
-//        pm.velocity += (force_vort / mass) * delta_t;
-//
-//        assert(check_vector(pm.velocity));
-//
-//        // Update viscosity (happens in place)
-//        viscosity_constraint(pm);
-//        assert(check_vector(pm.velocity));
+        // Update vorticity
+        Vector3D force_vort = force_vorticity_i(pm);
+        pm.velocity += (force_vort / mass) * delta_t;
+
+        assert(check_vector(pm.velocity));
+
+        // Update viscosity (happens in place)
+        viscosity_constraint(pm);
+        assert(check_vector(pm.velocity));
 
         // Update position
         pm.position = pm.predict_position;
@@ -513,7 +513,7 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
 
         assert(check_vector(neighborToPm));
 
-        /// Problem if both of the partilces are in the same location
+        /// Problem if both of the particles are in the same location
         if (dist == 0) {
             double small_e = 0.00001;
             neighborToPm = Vector3D();
@@ -525,10 +525,10 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
 
-        if (dist < 2 * thickness) {
+        if (dist < 10 * thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
-            Vector3D corrected = neighbor->predict_position + (2 * thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (10 * thickness)*neighborToPm;
             assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
             assert(check_vector(correction));
@@ -565,6 +565,7 @@ void Cloth::reset() {
         pm->position = pm->start_position;
         pm->predict_position = pm->start_position;
         pm->last_position = pm->start_position;
+        pm->velocity = Vector3D(0,0,0);
         pm++;
     }
 }

@@ -11,7 +11,7 @@ using namespace CGL;
 
 #define SURFACE_OFFSET 0.0001
 
-#define BOUNCE_DAMPING_FACTOR 0.5
+#define BOUNCE_DAMPING_FACTOR 0.7
 
 void Plane::collide(PointMass &pm) {
   // TODO (Part 3): Handle collisions with planes.
