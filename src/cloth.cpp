@@ -136,12 +136,12 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 //
 //        }
 
-//        // For each particle, deal with self-collisions (repel it from other point masses)
-//        for (PointMass &pm : point_masses) {
-//            assert(check_vector(pm.predict_position));
-//            self_collide(pm, simulation_steps);
-//            assert(check_vector(pm.predict_position));
-//        }
+        // For each particle, deal with self-collisions (repel it from other point masses)
+        for (PointMass &pm : point_masses) {
+            assert(check_vector(pm.predict_position));
+            self_collide(pm, simulation_steps);
+            assert(check_vector(pm.predict_position));
+        }
 
         // For each particle, calculate delta position and do collision detection/response
         for (PointMass &pm : point_masses) {
@@ -154,14 +154,6 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
             }
 
             pm.forces = pm.collision_forces;
-
-            // If there are no collision objects, zero out the forces so that you don't apply gravity twice in
-            // the next loop
-//            if (collision_objects->size() == 0) {
-//                pm.forces = Vector3D(0,0,0);
-//            }
-
-//            std::cout << "Updated forces = " << pm.forces << "\n";
 
             assert(check_vector(pm.predict_position));
 
@@ -531,10 +523,10 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
 
-        if (dist < 10 * thickness) {
+        if (dist < 2 * thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
-            Vector3D corrected = neighbor->predict_position + (100 * thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (2 * thickness)*neighborToPm;
             assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
             assert(check_vector(correction));
