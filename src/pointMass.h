@@ -13,7 +13,7 @@ class Halfedge;
 struct PointMass {
   PointMass(Vector3D position, bool pinned)
       : pinned(pinned), start_position(position), position(position), last_position(position),
-        predict_position(position), velocity(Vector3D()), delta_position(Vector3D()) {}
+        predict_position(position), velocity(Vector3D()), forces(Vector3D()), collision_forces(Vector3D()), delta_position(Vector3D()) {}
 
   Vector3D normal();
 
@@ -29,6 +29,8 @@ struct PointMass {
   Vector3D velocity;
   Vector3D forces;
   Vector3D delta_position;
+  Vector3D collision_forces;
+  double num_collisions = 0;
   double mass;
   double lambda = 0.0;
 
