@@ -15,7 +15,7 @@
     font-family: 'Source Sans Pro', sans-serif;
   }
 </style>
-<title>CS 184 Mesh Editor</title>
+<title>CS 184 Final Project Checkpoint </title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
 </head>
@@ -23,356 +23,145 @@
 
 <body>
 
-<h1 align="middle">Assignment 4: Cloth Simulator</h1>
-<h2 align="middle">Ruta Joshi</h2>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
+<h1 align="middle">Final Project Checkpoint: Fluid Simulation with Varying Density</h1>
+<h2 align="middle">Team: Ruta Joshi (26122656), Jacqueline Forsberg (26814270), Eric D’Sa (26127496)</h2>
 
 <br><br>
 
-<div>
+<div align="middle">
+  <img src="images/scene_images/b.png" align="middle" width="500px"/>
+  <figcaption align="middle">Initializing water [articles in box above a plane</figcaption>
+</div>
 
-<h2 align="middle">Overview</h2>
-<p>In this project, I implemented cloth simulation by using the mass-spring model of physical simulation. This involved discretizing a cloth into a set of point masses connected by springs that provide structural, shearing, and bending constraints between the masses. After this, I simulated the result of applying external forces such as gravity to a system of constrained point masses, which allowed me to simulate a cloth falling. After handling self-collisions and collisions with other objects, I implemented different types of shading and texture mapping using GLSL. Overall, this project taught me how to think about multi-dimensional structures such as cloth from the perspective of physics.</p>
+<br><br>
 
+<h3>Summary</h3>
+<p>
+  Our group is working on a fluid simulation. We are aiming to create a
+  simulation for fluids with a density control to adjust the density of
+  the fluid. In this way, we can test different kinds of fluids with
+  the same simulation.
+</p>
 
-<h2 align="middle">Part I: Masses and springs</h2>
-<p>In this part, I positioned point masses across a given width and height and created springs between the masses with rest lengths equal to the initial distances between the masses.</p>
-<p>I had to first position masses equally spaced across a given width and height. Then, I created structural constraints by adding springs between each point mass and the mass to it's left and the one above it in the grid. Then I added shearing constraints by creating springs between a point mass and the masses to its diagonal upper left and diagonal upper right. And finally I added bending constraints, by adding springs between a point mass and the point mass two away to its left as well as the point mass two above it.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part1/all_zoomed.png" width="480px" />
-                  <figcaption align="middle">The cloth with all the contraints applied, zoomed in.</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
+<br>
 
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part1/no_shearing.png" width="480px" />
-                  <figcaption align="middle">Wireframe without shearing constraints.</figcaption>
-                </td>
+<h3>What We Have Accomplished</h3>
+<p>
+  We adapted our project 4 code to create a starting point for our fluid
+  simulation. However, project 4 simulated the movement of a cloth, which
+  differs from a fluid in many key ways. We changed the way we create our
+  simulation in the following ways:
+</p>
+<ul>
+  <li>
+    Our cloth is no longer a cloth. We create point masses, and do not
+    create any springs, or any other connections between point masses.
+    A cloth had particles that stuck together in a fixed fashion. In a
+    fluid, the bonds between particles are less rigid.
+  </li>
+  <li>
+    We needed to create a box in which our fluid will fall in. We changed
+    the code to allow us to add multiple planes to one run of the simulation.
+  </li>
+  <li>
+    We changed our rendering for point masses and planes. Our point masses
+    are displayed as round blue spheres, and our planes are red squares.
+  </li>
+  <li>
+    We removed multiple shader controls, since we are focused on particle
+    interactions and not shading.
+  </li>
+  <li>
+    We added slider controls for density.
+  </li>
+</ul>
+<p>
+  After this, we implemented the simulation loop in the following research
+  paper (https://mmacklin.com/pbf_sig_preprint.pdf). This simulation loop
+  contains checks for constraints on a fluid, including incompressibility,
+  tensile instability, vorticity, and viscosity.
+</p>
 
-                <td>
-                  <img src="images/part1/just_shearing.png" width="480px" />
-                  <figcaption align="middle">Wireframe with just the shearing constraints.</figcaption>
-                </td>
-            </tr>
+<br>
 
-            <tr>
-                <td>
-                  <img src="images/part1/all.png" width="480px" />
-                  <figcaption align="middle">Wireframe with all constraints.</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
+<h3>Preliminary Results</h3>
+<p>
+  We have multiple point masses, moving independently of each other. Our
+  simulation has rendering changes to better display the movement of a
+  fluid, as well as a density control for the fluid. We have implemented
+  our simulation loop; however, the position function of our point masses
+  diverges after a few time steps, which results in large point displacements.
+</p>
+<table style="width=100%">
+  <tr>
+    <td>
+      <img src="images/scene_images/c.png" width="500px"/>
+      <figcaption align="middle">Water Particles in Box without lid</figcaption>
+    </td>
+    <td>
+      <img src="images/scene_images/a.png" width="500px"/>
+      <figcaption align="middle">Water Particles enclosed in Box</figcaption>
+    </td>
+  </tr>
+</table>
 
+<br>
 
-<h2 align="middle">Part 2: Simulation via numerical integration</h2>
-<p>In this part, I simulated the effects of gravity (and other external forces) by applying a total external acceleration to each point mass and computing new positions for each mass given external forces and spring constraints.</p>
-<p>After dropping a cloth pinned at two points, we see the following effect:</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part2/original.png" width="480px" />
-                  <figcaption align="middle">Cloth pinned at 2 points.</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>Now we experiment with changing parameters such as the spring constant of the fabric's constraint springs, the density of the fabric, and the damping:</p>
-<p>As we increase the spring constant ks, the cloth becomes more rigid, so there is less of a dip in the fabric. The rigidity is due to the added spring force that brings point masses closer together.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part2/ks_2knm.png" width="480px" />
-                  <figcaption align="middle">ks = 2,000 N/m</figcaption>
-                </td>
-                <td>
-                  <img src="images/part2/original.png" width="480px" />
-                  <figcaption align="middle">ks = 5,000 N/m</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part2/ks_20knm.png" width="480px" />
-                  <figcaption align="middle">ks = 20,000 N/m</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>As we increase the density, the cloth has a larger mass to area ratio, which makes it seem heavier and exerts a greater force on each spring. This makes the cloth dip more with higher density.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part2/density_2.png" width="480px" />
-                  <figcaption align="middle">density = 2 g/cm^2</figcaption>
-                </td>
-                <td>
-                  <img src="images/part2/original.png" width="480px" />
-                  <figcaption align="middle">density = 15 g/cm^2</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part2/density_45.png" width="480px" />
-                  <figcaption align="middle">density = 45 g/cm^2</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>As we increase damping, the cloth settles more quickly into its resting state. For zero (or very low) damping, the cloth moves back and forth while pinned and takes a long time to come to the resting state. The zero damping image below is of the cloth while vertical, clearly unsettled because it is not finished with its motion.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part2/damping_zero.png" width="480px" />
-                  <figcaption align="middle">damping = 0%</figcaption>
-                </td>
-                <td>
-                  <img src="images/part2/original.png" width="480px" />
-                  <figcaption align="middle">damping = 0.2%</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part2/density_45.png" width="480px" />
-                  <figcaption align="middle">damping = 0.5%</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>Here is an image of the same cloth pinned at 4 points instead of 1, using the default ks = 5000 N/m, density at 15 g/cm^2, and damping at 0.2%.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part2/pinned4_shaded.png" width="480px" />
-                  <figcaption align="middle">Pinned at all 4 points.</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
+<h3>Progress (Relative To Our Plan)</h3>
+<p>
+  We had three main goals in our plan. Our progress can be summarized as the following:
+</p>
+<ul>
+  <li>
+    <b>Fluid Simulation: </b> Core simulation loop for fluids is implemented.
+    This is mostly done, with some bugs.
+  </li>
+  <li>
+    <b>Density Control: </b> Our simulation included a density control. This
+    adjusts the density, but does not affect the movement of the fluid.
+  </li>
+  <li>
+    <b>Particle Colorization</b>: We have not attempted gradient colorization of particles.
+  </li>
+</ul>
 
+<br>
 
-<h2 align="middle">Part 3: Handling collisions with other objects</h2>
-<p>In this part, I handled collisions with spheres and planes. For spheres, I moved point masses that had fallen within the volume of a given sphere back to the surface. For planes, I moved point masses that had fallen through a plane back to the other side of the plane. To handle plane collisions, I found the t value corresponding the the intersection of a ray that originated from a point masses's position and intersected with the plane. I did this for the old position and new position of the point mass. If the t values had different signs, this indicated that they were on different sides of the plane. If this was the case, or if either point mass lied within the plane itself, I computed a correction vector from the intersection point toward the old position of the point mass, just above the plane itself, and applied it to the point mass. Due to the ray intersection test edge cases, this was slighly more complex than pushing a point up to the surface of a sphere.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part3/sphere_500.png" width="480px" />
-                  <figcaption align="middle">ks=500 N/m (a very stretchy cloth)</figcaption>
-                </td>
-                <td>
-                  <img src="images/part3/sphere_5000.png" width="480px" />
-                  <figcaption align="middle">ks=5000 N/m (a regular cloth)</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part3/sphere_50000.png" width="480px" />
-                  <figcaption align="middle">ks=50000 N/m (a more rigid cloth)</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part3/plane.png" width="480px" />
-                  <figcaption align="middle">A cloth lying flat on a plane.</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
+<!-- TODO -->
+<h3>Video</h3>
 
-<h2 align="middle">Part 4: Handling self-collisions</h2>
-<p>In this part, I handled a cloth's collision with itself. I did this by creating a hash table of point masses by placing those within a certain area of the simulation in the same hash bucket. Then, I looped through masses in each bucket and applied repulsive forces between masses that were too close together. As the cloth falls, you can see that it does not go through itself due to these repulsive forces.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part4/a.png" width="480px" />
-                  <figcaption align="middle">Stage 1: Cloth starting to fall.</figcaption>
-                </td>
-                <td>
-                  <img src="images/part4/b.png" width="480px" />
-                  <figcaption align="middle">Stage 2 of falling.</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part4/c.png" width="480px" />
-                  <figcaption align="middle">Stage 3 of falling.</figcaption>
-                </td>
-                <td>
-                  <img src="images/part4/d.png" width="480px" />
-                  <figcaption align="middle">Stage 4: completely fallen.</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>As we vary the density and the spring constant, the behavior of the cloth changes. Lower density cloth tends to fall flatter on the surface of the plane and spread out more due to the lower mass per area distribution which allows point masses not to cluster together due to weight. Similarly, a high spring constant ks leads to a more flat cloth because the rigidity of the cloth prevents it from folding too much into itself.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part4/density_2.png" width="480px" />
-                  <figcaption align="middle">density = 2 g/cm^2</figcaption>
-                </td>
-                <td>
-                  <img src="images/part4/density_15.png" width="480px" />
-                  <figcaption align="middle">density = 15 g/cm^2</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part4/density_45.png" width="480px" />
-                  <figcaption align="middle">density = 45 g/cm^2</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part4/ks_500.png" width="480px" />
-                  <figcaption align="middle">ks = 500 N/m</figcaption>
-                </td>
-                <td>
-                  <img src="images/part4/ks_5000.png" width="480px" />
-                  <figcaption align="middle">ks = 5000 N/m</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part4/ks_50000.png" width="480px" />
-                  <figcaption align="middle">ks = 50000 N/m</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
+<br>
 
-<h2 align="middle">Part 5: Shaders</h2>
-<p>In this part, I implemented Diffuse, Blinn-Phong, Texture Mapping, Bump & Displacement Map, and Mirror shaders using GLSL. Shaders use infomation about texture, material, and surface normals to decide how an object will be rendered.</p>
-<p>Shader Programs: Shader programs use vertex and fragment shaders together to create lighting and material effects. The vertex shader is used to transform vertices given constraints or transformations that affect their placement in the object space. These can be changes to the normal vectors of the surface or other things that cause displacement. These operations result in modifications to the corresponding positions of the vertices in the model and projection spaces. These modified positions are then passed into a fragment shader, which decides the color or shading of a fragment of the scene by interpolating or computing in some other manner using the properties that the vertex shader sends as input. The normal shader uses the surface normal itself to decide color for example.</p>
-<p>Blinn-Phong Shading Model: This shading model combines the effects of ambient light, diffuse shading, and specular shading to create a combined glossy effect. Ambient lighting provides a base color for the entire scene. Diffuse shading provides the effect of light coming from one direction and bouncing off a surface in a direction determined by the angle between a vector to the light source and the surface normal. The specular shading component provides the effect of rays from a light source hitting a particular point on the object and directly reflecting off, much like a mirror. By controlling the amount to which each of these effects manifest using constants, we can create the effect of a glossy material. Here we see the three separate components and how they combine into the final result.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part5/ambient_only.png" width="480px" />
-                  <figcaption align="middle">Ambient Only</figcaption>
-                </td>
-                <td>
-                  <img src="images/part5/diffuse_only.png" width="480px" />
-                  <figcaption align="middle">Diffuse Only</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part5/specular_only.png" width="480px" />
-                  <figcaption align="middle">Specular Only</figcaption>
-                </td>
-                <td>
-                  <img src="images/part5/phong_all.png" width="480px" />
-                  <figcaption align="middle">All Effects: Phong Shading</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>We can also apply a tecture to the rendered sphere using regular texture mapping.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part5/custom_texture.png" width="480px" />
-                  <figcaption align="middle">Custom Texture Cloth</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>We can map bumps using a given texture and phong shading to get the effect of a textured cloth which looks more realistic. At a higher resolution (128) we see more pronounced bumps than at a lower resolution (16). The same is true for displacement shading, which perturbs the vertices themselves before applying a bump shader.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part5/bump_sphere_cloth.png" width="480px" />
-                  <figcaption align="middle">Bump: sphere and cloth before</figcaption>
-                </td>
-                <td>
-                  <img src="images/part5/bump_fallen.png" width="480px" />
-                  <figcaption align="middle">Bump: sphere and cloth after</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part5/bump_sphere.png" width="480px" />
-                  <figcaption align="middle">Bump: just the sphere</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part5/bump_fallen_16.png" width="480px" />
-                  <figcaption align="middle">Bump: resolution = 16</figcaption>
-                </td>
-                <td>
-                  <img src="images/part5/bump_fallen_128.png" width="480px" />
-                  <figcaption align="middle">Bump: resolution = 128</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
+<!-- TODO -->
+<h3>Slides</h3>
 
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part5/displacement_sphere_16.png" width="480px" />
-                  <figcaption align="middle">Displacement: resolution = 16</figcaption>
-                </td>
-                <td>
-                  <img src="images/part5/displacement_sphere_128.png" width="480px" />
-                  <figcaption align="middle">Displacement: resolution = 128</figcaption>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                  <img src="images/part5/displacement_fallen_16.png" width="480px" />
-                  <figcaption align="middle">Displacement: resolution = 16</figcaption>
-                </td>
-                <td>
-                  <img src="images/part5/displacement_fallen_128.png" width="480px" />
-                  <figcaption align="middle">Displacement: resolution = 128</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>Here we see the effect of shading using a mirror material, which reflects with perfect specular reflection.</p>
-    <div align="center">
-        <table style="width=100%">
-            <tr>
-                <td>
-                  <img src="images/part5/mirror_sphere.png" width="480px" />
-                  <figcaption align="middle">Mirror Sphere</figcaption>
-                </td>
-                <td>
-                  <img src="images/part5/mirror_cloth.png" width="480px" />
-                  <figcaption align="middle">Mirror Sphere with Cloth</figcaption>
-                </td>
-            </tr>
-        </table>
-    </div>
-<p>In the custom shader above (the multicolored one), I simply created a new texture by finding an image online which could be used for texture sampling. I used this in the custom shading GLSL files (Custom.frag).</p>
+<br>
 
+<h3>Links/Citations</h3>
+<ul>
+  <li>
+    <a href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
+    <p>
+      This is the core fluid simulation paper we referenced. We implementation the simulation loop>
+      and fluid constraints in this paper.
+    </p>
+  </li>
+  <li>
+    <a href="https://dl.acm.org/citation.cfm?id=1360647">https://dl.acm.org/citation.cfm?id=1360647</a>
+    <p>
+      We referenced this paper for assistance with implementing vorticity constraints. The paper "Position
+      Based Fluids" (above) referenced this paper in their vorticity constraint calculations.
+    </p>
+  </li>
+  <li>
+    <a href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf</a>
+    <p>
+      We used some of the kernels included in this link.
+    <p>
+  </li>
+</ul>
+
+</body>
 </html>
