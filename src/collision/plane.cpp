@@ -68,6 +68,7 @@ void Plane::render(GLShader &shader) {
   MatrixXf positions(3, 4);
   MatrixXf normals(3, 4);
   MatrixXf vert(1, 4);
+  MatrixXf h(1, 4);
 
   Vector3f top = sPoint + 1 * (sCross);
   Vector3f bot = sPoint + 1 * (- sParallel);
@@ -92,9 +93,11 @@ void Plane::render(GLShader &shader) {
   normals.col(3) << sNormal;
 
   for (int i = 0; i < 4 ; i++) {
+    h.col(i) << -1;
     vert.col(i) << 0.0;
   }
   shader.uploadAttrib("is_vertex", vert);
+  shader.uploadAttrib("height", h);
 
   if (shader.uniform("u_color", false) != -1) {
     shader.setUniform("u_color", color);
