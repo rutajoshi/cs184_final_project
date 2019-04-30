@@ -62,6 +62,13 @@
     fluid, the bonds between particles are less rigid.
   </li>
   <li>
+    In going from a 2-dimensional grid to a 3-dimensional system of point masses
+    in a unit cube, we had to change the spatial hashing function used to find
+    the neighbors of a point mass. We added a depth and num_depth_points to the
+    Cloth object from part 4 (which is what we have retrofitted to act as a cloth),
+    and we now split up the space into cubes rather than squares over a fixed z value.
+  </li>
+  <li>
     We needed to create a box in which our fluid will fall in. We changed
     the code to allow us to add multiple planes to one run of the simulation.
   </li>
