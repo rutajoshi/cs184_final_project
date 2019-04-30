@@ -11,7 +11,7 @@ using namespace CGL;
 
 #define SURFACE_OFFSET 0.0001
 
-#define BOUNCE_DAMPING 0.7
+#define BOUNCE_DAMPING_FACTOR 0.5
 
 void Plane::collide(PointMass &pm) {
   // TODO (Part 3): Handle collisions with planes.
@@ -39,16 +39,13 @@ void Plane::collide(PointMass &pm) {
       assert(new_t_pos * new_t_lastpos >= 0);
 
       // If collision --> apply normal force in the opposite direction
-      Vector3D velocity_opp = -pm.velocity;
-//      velocity_opp.normalize();
-//      Vector3D reflected_velocity = pm.velocity + 2 * dot(velocity_opp, normal)*normal;
-//      pm.velocity = reflected_velocity * BOUNCE_DAMPING;
-
+      pm.num_collisions += 1;
       double theta = dot(-pm.velocity, normal) / pm.velocity.norm();
       double delta_t = 1.0f / 90 / 30;
       double magnitude = 2*pm.mass*pm.velocity.norm()*cos(theta) / delta_t;
       Vector3D normal_force = magnitude * normal;
-      pm.forces = normal_force;
+      pm.collision_forces = pow(BOUNCE_DAMPING_FACTOR, pm.num_collisions) * normal_force;
+      pm.forces = pm.collision_forces;
   } else {
       pm.forces = Vector3D(0,0,0);
   }

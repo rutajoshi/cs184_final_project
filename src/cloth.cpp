@@ -90,7 +90,6 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     double mass = width * height * depth * cp->density / num_width_points / num_height_points / num_depth_points;
     double delta_t = 1.0f / frames_per_sec / simulation_steps;
     count_steps += 1;
-//    std::cout<<"\n on sim  "<<count_steps <<"\n";
 
     Vector3D total_ext_force = Vector3D(0,0,0);
     for (int i = 0; i < external_accelerations.size(); i++) {
@@ -102,53 +101,75 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     }
 
     for (PointMass &pm : point_masses) {
+        // For all particles i, apply forces to get a velocity update.
+        // Then set the predicted position using only the velocity.
         pm.velocity += (pm.forces / mass) * delta_t;
+        if (pm.collision_forces.norm() != 0) {
+            // Remove collision forces from the last iteration so they only apply for one time step
+            pm.forces -= pm.collision_forces;
+            pm.collision_forces = Vector3D(0,0,0);
+        }
         pm.predict_position = pm.position + delta_t * pm.velocity;
+        // Set the last position to the current predicted position for use in hashing to find neighbors
         pm.last_position = pm.predict_position;
-        // test
+
+        // validity check the velocity and predicted position
         assert(check_vector(pm.velocity));
         assert(check_vector(pm.predict_position));
     }
 
-
+    // Build a spatial map so you can easily find all the neighbors of a particle
     build_spatial_map();
-    // assert(count_steps < 27499);
-    for (int j = 0; j < 10; j++) {
+
+    // For some number of iterations, do logic to update the predicted position
+    for (int j = 0; j < 3; j++) {
+        // For each particle, calculate lambda_i
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             lambda_i(pm);
             assert(check_vector(pm.predict_position));
 
-            // test
+            // validity check the lambda
             assert(!isnan(pm.lambda));
             assert(!isinf(pm.lambda));
 
         }
 
+        // For each particle, deal with self-collisions (repel it from other point masses)
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             self_collide(pm, simulation_steps);
             assert(check_vector(pm.predict_position));
         }
 
+        // For each particle, calculate delta position and do collision detection/response
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
+
+            // Collide with all collision objects
             for (CollisionObject* c : *collision_objects){
                 c->collide(pm);
+            }
+
+            // If there are no collision objects, zero out the forces so that you don't apply gravity twice in
+            // the next loop
+            if (collision_objects->size() == 0) {
+                pm.forces = Vector3D(0,0,0);
             }
             assert(check_vector(pm.predict_position));
 
             // test
             assert(check_vector(pm.delta_position));
-            
+
         }
 
+        // For each particle, update the predicted position using delta position
         for (PointMass &pm : point_masses) {
             // Update predicted positions
             pm.predict_position += pm.delta_position;
 
-            // test
+            // validity test the predicted positions
             assert(check_vector(pm.predict_position));
         }
     }
@@ -160,15 +181,15 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         assert(check_vector(pm.velocity));
 
 
-        // Update vorticity
-        Vector3D force_vort = force_vorticity_i(pm);
-        pm.velocity += (force_vort / mass) * delta_t;
-
-        assert(check_vector(pm.velocity));
-
-        // Update viscosity (happens in place)
-        viscosity_constraint(pm);
-        assert(check_vector(pm.velocity));
+//        // Update vorticity
+//        Vector3D force_vort = force_vorticity_i(pm);
+//        pm.velocity += (force_vort / mass) * delta_t;
+//
+//        assert(check_vector(pm.velocity));
+//
+//        // Update viscosity (happens in place)
+//        viscosity_constraint(pm);
+//        assert(check_vector(pm.velocity));
 
         // Update position
         pm.position = pm.predict_position;
@@ -228,7 +249,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
     vector<PointMass *> *neighbors = getter->second;
     double h = calc_h();
 
-    Vector3D delta_p = Vector3D();
+    Vector3D delta_p = Vector3D(0,0,0);
 
     // Tensile instability constants
     double k = 0.1;
@@ -252,7 +273,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
         double numer = kernel_poly6(neighborToPm, h);
         double s_corr = -k * pow(numer / denom, n);
 
-        delta_p = delta_p + (pm_i.lambda + neighbor->lambda + s_corr) * term;
+        delta_p += (pm_i.lambda + neighbor->lambda + s_corr) * term;
     }
     delta_p = (1.0 / pm_i.rest_density) * delta_p;
     return delta_p;
@@ -279,7 +300,7 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
 double Cloth::calculate_density_neighbors(PointMass &pm) {
     float hash_pos = hash_position(pm.last_position);
 
-    // test
+    // validity test the hash position
     if (isnan(hash_pos)) {
         std::cout << "\nHash position is nan for position = " << pm.position << "\n";
     }
@@ -293,7 +314,7 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
             continue;
         }
         Vector3D neighborToPm = (pm.predict_position - neighbor->predict_position);
-        sum += kernel_poly6(neighborToPm, h);
+        sum += pm.mass * kernel_poly6(neighborToPm, h);
     }
     return sum;
 }
@@ -304,24 +325,11 @@ Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
     assert(!isinf(r));
 
     if (0 < r && r <= h) {
-        double mult = 15. /M_PI / pow(h,6) * pow((h - r), 3);
-        mult /= r;
-
-        return mult * pos_dif;
+        Vector3D r_hat = pos_dif / r;
+        Vector3D result = (-45.0 / (M_PI * pow(h, 6))) * pow(h-r, 2) * r_hat;
+        return result;
     }
-    // if (r <= h) {
-    //     assert(r == 0);
-    //     std::cout << "\n spiky_kernel_grad r= " << r<<" h = " <<h<<"\n"; 
-    // } else{
-    //     // bool f = r <= h
-    //     // std::cout << "\n r<= h" << (r <=h) << " r> h " << (r > h)<<"\n";
-    //     if (!(r > h)) {
-    //         std::cout << "\n spiky_kernel_grad pos_dif " << pos_dif<<"\n"; 
-    //         std::cout << "\n spiky_kernel_grad r= " << r<<" h = " <<h<<"\n"; 
 
-    //     }
-    //     assert(r > h);
-    // }
     return Vector3D(0);
 
 }
@@ -398,8 +406,8 @@ void Cloth::lambda_i(PointMass &pm) {
         assert(!isnan(grad_Ci_pk_norm));
         denom += pow(grad_Ci_pk_norm, 2);
     }
-
     denom += this->epsilon;
+
     assert(!isnan(denom) && !(isinf(denom)));
 
     double lambda = -1.0 * C_i / denom;
@@ -508,8 +516,6 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         /// Problem if both of the partilces are in the same location
         if (dist == 0) {
             double small_e = 0.00001;
-            // Vector3D offset = Vector3D(small_e, small_e, small_e);
-            // neighborToPm += offset;
             neighborToPm = Vector3D();
             neighborToPm.x = totalCorrection.x + small_e;
             neighborToPm.y = totalCorrection.y + small_e;
@@ -518,11 +524,7 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
 
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
-    
-        // std::cout <<"\n before norm " << neighborToPm << "\n";
-        
-        // std::cout <<"\n after norm " << neighborToPm << "\n";
-        
+
         if (dist < 2 * thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
