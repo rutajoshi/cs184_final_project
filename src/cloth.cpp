@@ -126,41 +126,41 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     for (int j = 0; j < 5; j++) {
         // For each particle, calculate lambda_i
         for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            lambda_i(pm);
-            assert(check_vector(pm.predict_position));
+//            assert(check_vector(pm.predict_position));
+//            lambda_i(pm);
+//            assert(check_vector(pm.predict_position));
 
             // validity check the lambda
-            assert(!isnan(pm.lambda));
-            assert(!isinf(pm.lambda));
+//            assert(!isnan(pm.lambda));
+//            assert(!isinf(pm.lambda));
 
         }
 
         // For each particle, deal with self-collisions (repel it from other point masses)
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            self_collide(pm, simulation_steps);
-            assert(check_vector(pm.predict_position));
-        }
+//        for (PointMass &pm : point_masses) {
+//            assert(check_vector(pm.predict_position));
+//            self_collide(pm, simulation_steps);
+//            assert(check_vector(pm.predict_position));
+//        }
 
         // For each particle, calculate delta position and do collision detection/response
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
+//        for (PointMass &pm : point_masses) {
+//            assert(check_vector(pm.predict_position));
+//            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
-            // Collide with all collision objects
-            for (CollisionObject* c : *collision_objects){
-                c->collide(pm);
-            }
+//            // Collide with all collision objects
+//            for (CollisionObject* c : *collision_objects){
+//                c->collide(pm);
+//            }
+//
+//            pm.forces = pm.collision_forces;
+//
+//            assert(check_vector(pm.predict_position));
+//
+//            // test
+//            assert(check_vector(pm.delta_position));
 
-            pm.forces = pm.collision_forces;
-
-            assert(check_vector(pm.predict_position));
-
-            // test
-            assert(check_vector(pm.delta_position));
-
-        }
+//        }
 
         // For each particle, update the predicted position using delta position
         for (PointMass &pm : point_masses) {
@@ -169,6 +169,15 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
             // validity test the predicted positions
             assert(check_vector(pm.predict_position));
+
+            self_collide(pm, simulation_steps);
+            // Collide with all collision objects
+            for (CollisionObject* c : *collision_objects){
+                c->collide(pm);
+            }
+
+            pm.forces = pm.collision_forces;
+
         }
     }
 
