@@ -126,13 +126,13 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     for (int j = 0; j < 5; j++) {
         // For each particle, calculate lambda_i
         for (PointMass &pm : point_masses) {
-//            assert(check_vector(pm.predict_position));
-//            lambda_i(pm);
-//            assert(check_vector(pm.predict_position));
+            assert(check_vector(pm.predict_position));
+            lambda_i(pm);
+            assert(check_vector(pm.predict_position));
 
             // validity check the lambda
-//            assert(!isnan(pm.lambda));
-//            assert(!isinf(pm.lambda));
+            assert(!isnan(pm.lambda));
+            assert(!isinf(pm.lambda));
 
         }
 
@@ -144,9 +144,9 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 //        }
 
         // For each particle, calculate delta position and do collision detection/response
-//        for (PointMass &pm : point_masses) {
-//            assert(check_vector(pm.predict_position));
-//            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
+        for (PointMass &pm : point_masses) {
+            assert(check_vector(pm.predict_position));
+            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
 //            // Collide with all collision objects
 //            for (CollisionObject* c : *collision_objects){
@@ -154,13 +154,13 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 //            }
 //
 //            pm.forces = pm.collision_forces;
-//
-//            assert(check_vector(pm.predict_position));
-//
-//            // test
-//            assert(check_vector(pm.delta_position));
 
-//        }
+            assert(check_vector(pm.predict_position));
+
+            // test
+            assert(check_vector(pm.delta_position));
+
+        }
 
         // For each particle, update the predicted position using delta position
         for (PointMass &pm : point_masses) {
@@ -200,6 +200,9 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         // Update position
         pm.position = pm.predict_position;
+
+        assert(pm.position.y <= 1.4);
+        assert(pm.position.y >= -0.2);
 
         // test
         assert(check_vector(pm.position));
@@ -527,10 +530,10 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
 
-        if (dist < 2 * thickness) {
+        if (dist < thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
-            Vector3D corrected = neighbor->predict_position + (2 * thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (thickness)*neighborToPm;
             assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
             assert(check_vector(correction));
