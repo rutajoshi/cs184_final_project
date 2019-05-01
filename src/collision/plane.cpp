@@ -34,20 +34,20 @@ void Plane::collide(PointMass &pm) {
       Vector3D correction = correctionPoint - inter_position;
       pm.predict_position = inter_position + (1 - friction) * correction;
 
-      assert(pm.predict_position.y <= 1.4);
-      assert(pm.predict_position.y >= -0.2);
+//      assert(pm.predict_position.y <= 1.4);
+//      assert(pm.predict_position.y >= -0.2);
 
       double new_t_pos = dot(point - pm.predict_position, normal) / dot(-normal, normal);
       double new_t_lastpos = dot(point - inter_position, normal) / dot(-normal, normal);
       assert(new_t_pos * new_t_lastpos >= 0);
 
       // If collision --> apply normal force in the opposite direction
-      pm.num_collisions += 1;
-      double cos_theta = dot(-pm.velocity, normal) / pm.velocity.norm();
-      double theta = acos(cos_theta);
-      double delta_t = 1.0f / 90; // 0.016; //
-      Vector3D normal_force = (-2 * pm.mass * pm.velocity * cos_theta / delta_t);
-      pm.collision_forces += normal_force;
+//      pm.num_collisions += 1;
+//      double cos_theta = dot(-pm.velocity, normal) / pm.velocity.norm();
+//      double theta = acos(cos_theta);
+//      double delta_t = 1.0f / 90; // 0.016; //
+//      Vector3D normal_force = (-2 * pm.mass * pm.velocity * cos_theta / delta_t);
+//      pm.collision_forces += normal_force;
   }
 }
 

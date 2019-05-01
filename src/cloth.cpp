@@ -37,7 +37,7 @@ Cloth::Cloth(double width, double height, double depth, int num_width_points,
     this->num_height_points = num_height_points;
     this->num_depth_points = num_depth_points;
     this->thickness = thickness;
-    this->epsilon = 0.1; //0.01;
+    this->epsilon = 600; //0.1; //0.01;
 
     buildGrid();
     buildClothMesh();
@@ -58,28 +58,46 @@ void Cloth::buildGrid() {
     double start_left = 0;
     double start_right = 0;
     double start_bottom = 0;
+    double unit_h = (height / (num_height_points - 1));
+    double unit_w = (width / (num_width_points - 1));
+    double unit_d = (depth / (num_depth_points - 1));
     for (int p = 0; p < num_depth_points; p++) {
         for (int c = 0; c < num_width_points; c++) {
             for (int r = 0; r < num_height_points; r++) {
-                double x = start_left + r * (height / (num_height_points - 1));
-                double y = start_right + c * (width / (num_width_points - 1));
-                double z = start_bottom + p * (depth / (num_depth_points - 1));
+                double rand_i = rand() % 2;
+                rand_i -= 1;
+                rand_i /= 10;
+                rand_i = 0;
+                double x = start_left + (r + rand_i) * (unit_h);
+                x = max(0., x);
+                x = min(x, 1.);
+                rand_i = rand() % 2;
+                rand_i -= 1;
+                rand_i /= 10;
+                rand_i = 0;
+                double y = start_right + (c + rand_i) * (unit_w);
+                y = max(0., y);
+                y = min(y, 1.);
+                rand_i = rand() % 2;
+                rand_i -= 1;
+                rand_i /= 10;
+                rand_i = 0;
+                double z = start_bottom + (p + rand_i) * (unit_d);
+                z = max(0., z);
+                z = min(z, 1.);
 
                 Vector3D pos;
                 if (orientation == HORIZONTAL) {
-                    //pos = Vector3D(x, 1, y);
                     pos = Vector3D(x, z, y);
                 }
                 else {
-                    //double offset = ((rand() % 2) - 1.0) / 1000;
-                    //pos = Vector3D(x, y, offset);
                     pos = Vector3D(x, y, z);
                 }
                 //vector<int> rc{ r, c };
                 bool pinnedPoint = false;
                 PointMass pm = PointMass(pos, pinnedPoint);
                 // NOTE: density is from pinned2.json
-                pm.mass = width * height * depth * 1000 / num_width_points / num_height_points / num_depth_points;
+                pm.mass = 1; //width * height * depth * 1000 / num_width_points / num_height_points / num_depth_points;
                 point_masses.push_back(pm);
             }
         }
@@ -89,8 +107,8 @@ void Cloth::buildGrid() {
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
                      vector<Vector3D> external_accelerations,
                      vector<CollisionObject *> *collision_objects) {
-    double mass = width * height * depth * cp->density / num_width_points / num_height_points / num_depth_points;
-    double delta_t = 1.0f / frames_per_sec / simulation_steps; // 0.016; //
+    double mass = 1; //width * height * depth * cp->density / num_width_points / num_height_points / num_depth_points;
+    double delta_t = 0.0083; //1.0f / frames_per_sec / simulation_steps; // 0.016; //
     count_steps += 1;
 
     Vector3D total_ext_force = Vector3D(0,0,0);
@@ -123,7 +141,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     build_spatial_map();
 
     // For some number of iterations, do logic to update the predicted position
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < 40; j++) {
         // For each particle, calculate lambda_i
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
@@ -137,23 +155,23 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         }
 
         // For each particle, deal with self-collisions (repel it from other point masses)
-//        for (PointMass &pm : point_masses) {
-//            assert(check_vector(pm.predict_position));
-//            self_collide(pm, simulation_steps);
-//            assert(check_vector(pm.predict_position));
-//        }
+        for (PointMass &pm : point_masses) {
+            assert(check_vector(pm.predict_position));
+            self_collide(pm, simulation_steps);
+            assert(check_vector(pm.predict_position));
+        }
 
         // For each particle, calculate delta position and do collision detection/response
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
 
-//            // Collide with all collision objects
-//            for (CollisionObject* c : *collision_objects){
-//                c->collide(pm);
-//            }
-//
-//            pm.forces = pm.collision_forces;
+            // Collide with all collision objects
+            for (CollisionObject* c : *collision_objects){
+                c->collide(pm);
+            }
+
+            pm.forces = BOUNCE_DAMPING_FACTOR * pm.collision_forces;
 
             assert(check_vector(pm.predict_position));
 
@@ -167,16 +185,13 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
             // Update predicted positions
             pm.predict_position += pm.delta_position;
 
+            // Collide with all collision objects AGAIN
+//            for (CollisionObject* c : *collision_objects){
+//                c->collide(pm);
+//            }
+
             // validity test the predicted positions
             assert(check_vector(pm.predict_position));
-
-            self_collide(pm, simulation_steps);
-            // Collide with all collision objects
-            for (CollisionObject* c : *collision_objects){
-                c->collide(pm);
-            }
-
-            pm.forces = pm.collision_forces;
 
         }
     }
@@ -201,8 +216,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         // Update position
         pm.position = pm.predict_position;
 
-        assert(pm.position.y <= 1.4);
-        assert(pm.position.y >= -0.2);
+//        assert(pm.position.y <= 1.4);
+//        assert(pm.position.y >= -0.2);
 
         // test
         assert(check_vector(pm.position));
@@ -235,11 +250,22 @@ void Cloth::build_spatial_map() {
 
 // ##########################################################
 double Cloth::calc_h() {
-    double s = 1.0 / pow(num_width_points * num_height_points * num_depth_points, 1.0/3.0);
-    return s;
-//    return 0.25;
+//    double s = 1.0 / pow(num_width_points * num_height_points * num_depth_points, 1.0/3.0);
+//    return s;
+    return 0.1;
 }
 
+Vector3D Cloth::calc_delta_q() {
+    Vector3D vec = Vector3D();
+    do {
+        vec.x = (rand() % 2) - 1;
+        vec.y = (rand() % 2) - 1;
+        vec.z = (rand() % 2) - 1;
+        vec.normalize();
+        vec *= 0.03;
+    } while(isnan(vec.norm()));
+    return vec;
+}
 
 Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
     float hash_pos = hash_position(pm_i.last_position);
@@ -258,7 +284,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
     // Tensile instability constants
     double k = 0.2; //0.1;
     int n = 4;
-    Vector3D delta_q = 0.2 * Vector3D(0.25, 0.25, 0.25); //Vector3D(0.03, 0.03, 0.03);
+    Vector3D delta_q = calc_delta_q();//0.03; 0.2 * Vector3D(0.25, 0.25, 0.25); //Vector3D(0.03, 0.03, 0.03);
     double denom = kernel_poly6(delta_q, h);
 
     assert(check_vector(pm_i.predict_position));
@@ -275,7 +301,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
 
         // Tensile instability calculations
         double numer = kernel_poly6(neighborToPm, h);
-        double s_corr = -k * pow(numer / denom, n);
+        double s_corr = 0; //0.0001; //-k * pow(numer / denom, n);
 
         delta_p += (pm_i.lambda + neighbor->lambda + s_corr) * term;
     }
@@ -404,6 +430,9 @@ void Cloth::lambda_i(PointMass &pm) {
     auto getter = map.find(hash_pos);
     vector<PointMass *> *neighbors = getter->second;
     for (PointMass *neighbor : *neighbors) {
+        if (&pm == neighbor) {
+            continue;
+        }
         double grad_Ci_pk_norm = delta_constraint_pk(pm, *neighbor);
         
         assert(!(isinf(grad_Ci_pk_norm)));
@@ -449,6 +478,9 @@ Vector3D Cloth::location_vector(PointMass &pm_i) {
 
     Vector3D p_pos_sum = Vector3D();
     for (PointMass *neighbor : *neighbors) {
+        if (neighbor == &pm_i) {
+            continue;
+        }
         p_pos_sum += neighbor->predict_position;
     }
 
@@ -530,10 +562,10 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
 
-        if (dist < thickness) {
+        if (dist < 2 * thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
-            Vector3D corrected = neighbor->predict_position + (thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (2 * thickness)*neighborToPm;
             assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
             assert(check_vector(correction));
