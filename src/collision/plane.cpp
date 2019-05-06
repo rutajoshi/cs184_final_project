@@ -13,33 +13,102 @@ using namespace CGL;
 
 #define BOUNCE_DAMPING_FACTOR 0.1
 
+int sign(double x) {
+    if (x > 0) return 1;
+    if (x < 0) return -1;
+    return 0;
+}
+
 void Plane::collide(PointMass &pm) {
   // TODO (Part 3): Handle collisions with planes.
-  Vector3D inter_position = pm.position;
 
-  double t_pos = dot(point - pm.predict_position, normal) / dot(-normal, normal);
-  double t_lastpos = dot(point - inter_position, normal) / dot(-normal, normal);
+    Vector3D original_side = pm.position;
+    Vector3D current_side  = pm.predict_position;
 
-  // then the points are on opposite sides of the plane
-  if (t_pos * t_lastpos <= 0) {
-//      std::cout<<"\n collision occured \n";
-      Vector3D correctionPoint;
-      if (t_pos <= 0) {
-        Vector3D tangentPoint = pm.predict_position + t_pos * (-normal);
-        correctionPoint = tangentPoint + SURFACE_OFFSET * normal;
-      } else {
-        Vector3D tangentPoint = pm.predict_position + t_pos * (-normal);
-        correctionPoint = tangentPoint - SURFACE_OFFSET * normal;
-      }
-      Vector3D correction = correctionPoint - inter_position;
-      pm.predict_position = inter_position + (1 - friction) * correction;
+    int prev_dot = sign(dot(normal, original_side - point));
+    int cur_dot = sign(dot(normal, current_side - point));
 
-//      assert(pm.predict_position.y <= 1.4);
-//      assert(pm.predict_position.y >= -0.2);
+//    if (pm.predict_position.y < -0.1) {
+//        std::cout << "\nprev_dot" << prev_dot << "  cur_dot "<<cur_dot <<"\n";
+//    }
 
-      double new_t_pos = dot(point - pm.predict_position, normal) / dot(-normal, normal);
-      double new_t_lastpos = dot(point - inter_position, normal) / dot(-normal, normal);
-      assert(new_t_pos * new_t_lastpos >= 0);
+
+    if (cur_dot != prev_dot) {
+        Vector3D dir = current_side - point;
+        Vector3D comp_par_norm = dot(dir, normal) * normal;
+        Vector3D tangent_pt = current_side - comp_par_norm;
+//        assert(dot(tangent_pt,  normal) == 0);
+        comp_par_norm.normalize();
+        Vector3D correction_vec;
+        if (prev_dot >= 0){
+            correction_vec = (tangent_pt - SURFACE_OFFSET * comp_par_norm) - original_side;
+        } else {
+            correction_vec = (tangent_pt + SURFACE_OFFSET * comp_par_norm) - original_side;
+        }
+//        assert(pm.predict_position.y > -0.1);
+        pm.predict_position = original_side + (1.0 - friction) * correction_vec;
+        assert(pm.predict_position.y > -0.1);
+
+    }
+
+
+    current_side  = pm.predict_position;
+
+    prev_dot = sign(dot(normal, original_side - point));
+    cur_dot = sign(dot(normal, current_side - point));
+    assert((cur_dot == prev_dot));
+
+    assert(pm.predict_position.y > -0.1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  Vector3D inter_position = pm.position;
+//
+//
+//  double t_pos = dot(point - pm.predict_position, normal) / dot(-normal, normal);
+//  double t_lastpos = dot(point - inter_position, normal) / dot(-normal, normal);
+//
+//  // then the points are on opposite sides of the plane
+//  if (t_pos * t_lastpos <= 0) {
+////      std::cout<<"\n collision occured \n";
+//      Vector3D correctionPoint;
+//      if (t_pos <= 0) {
+//        Vector3D tangentPoint = pm.predict_position + t_pos * (-normal);
+//        correctionPoint = tangentPoint + SURFACE_OFFSET * normal;
+//      } else {
+//        Vector3D tangentPoint = pm.predict_position + t_pos * (-normal);
+//        correctionPoint = tangentPoint - SURFACE_OFFSET * normal;
+//      }
+//      Vector3D correction = correctionPoint - inter_position;
+//      pm.predict_position = inter_position + (1 - friction) * correction;
+//
+////      assert(pm.predict_position.y <= 1.4);
+////      assert(pm.predict_position.y >= -0.2);
+//
+//      double new_t_pos = dot(point - pm.predict_position, normal) / dot(-normal, normal);
+//      double new_t_lastpos = dot(point - inter_position, normal) / dot(-normal, normal);
+//      assert(new_t_pos * new_t_lastpos >= 0);
 
       // If collision --> apply normal force in the opposite direction
 //      pm.num_collisions += 1;
@@ -48,7 +117,7 @@ void Plane::collide(PointMass &pm) {
 //      double delta_t = 1.0f / 90; // 0.016; //
 //      Vector3D normal_force = (-2 * pm.mass * pm.velocity * cos_theta / delta_t);
 //      pm.collision_forces += normal_force;
-  }
+//  }
 }
 
 void Plane::render(GLShader &shader) {

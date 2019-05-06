@@ -139,17 +139,17 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     }
 
     // Build a spatial map so you can easily find all the neighbors of a particle
-//    build_spatial_map();
+    build_spatial_map();
 
     // For some number of iterations, do logic to update the predicted position
     for (int j = 0; j < 40; j++) {
-        build_spatial_map();
+//        build_spatial_map();
 
         // For each particle, calculate lambda_i
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
-//            lambda_i(pm);
-            pm.lambda = 0.01;
+            lambda_i(pm);
+//            pm.lambda = 0.01;
             assert(check_vector(pm.predict_position));
 
             // validity check the lambda
@@ -158,7 +158,17 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         }
 
-        // For each particle, deal with self-collisions (repel it from other point masses)
+
+
+
+        // For each particle, update the predicted position using delta position
+        for (PointMass &pm : point_masses) {
+            // Update predicted positions
+             pm.predict_position += pm.delta_position;
+            // validity test the predicted positions
+            assert(check_vector(pm.predict_position));
+
+        }
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             self_collide(pm, simulation_steps);
@@ -167,35 +177,43 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         // For each particle, calculate delta position and do collision detection/response
         for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
-            if (pm.delta_position.norm() > 0.05) {
-                std::cout << "norm = " << pm.delta_position.norm() << "\n";
-                pm.delta_position.normalize();
-                pm.delta_position *= 0.05;
-            }
-
             // Collide with all collision objects
-            for (CollisionObject* c : *collision_objects){
+            for (CollisionObject *c : *collision_objects) {
                 c->collide(pm);
             }
-
-            assert(check_vector(pm.predict_position));
-
-            // test
-            assert(check_vector(pm.delta_position));
-
-        }
-
-        // For each particle, update the predicted position using delta position
-        for (PointMass &pm : point_masses) {
-            // Update predicted positions
-            pm.predict_position += pm.delta_position;
-            // validity test the predicted positions
-            assert(check_vector(pm.predict_position));
-
         }
     }
+
+
+
+
+
+
+
+
+
+    for (PointMass &pm : point_masses) {
+        assert(check_vector(pm.predict_position));
+        self_collide(pm, simulation_steps);
+        assert(check_vector(pm.predict_position));
+    }
+
+    // For each particle, calculate delta position and do collision detection/response
+    for (PointMass &pm : point_masses) {
+        // Collide with all collision objects
+        for (CollisionObject *c : *collision_objects) {
+            c->collide(pm);
+        }
+    }
+
+
+
+
+
+
+
+
+
 
     for (PointMass &pm : point_masses) {
         // Update velocity
@@ -217,7 +235,9 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 //        assert(check_vector(pm.velocity));
 
         // Update position
+        assert(pm.position.y > -0.1);
         pm.position = pm.predict_position;
+        assert(pm.position.y > -0.1);
 
 //        assert(pm.position.y <= 1.4);
 //        assert(pm.position.y >= -0.2);
@@ -229,13 +249,19 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 }
 
 vector<PointMass *> *Cloth::get_neighbors(PointMass &pm) {
-    float hash_pos = hash_position(pm.predict_position); // CHANGED from last_position
+    float hash_pos = hash_position(pm.last_position); // CHANGED from last_position
     // validity test the hash position
     if (isnan(hash_pos)) {
         std::cout << "\nHash position is nan for position = " << pm.position << "\n";
     }
     auto getter = map.find(hash_pos);
+    if (getter == map.end()) {
+        return new vector<PointMass *>();
+    }
+
     vector<PointMass *> *neighbors = getter->second;
+
+
     return neighbors;
 }
 
@@ -248,8 +274,8 @@ void Cloth::build_spatial_map() {
 
     // TODO (Part 4): Build a spatial map out of all of the point masses.
     for (PointMass &pm : point_masses) {
-//        float hash_pos = hash_position(pm.last_position);
-        float hash_pos = hash_position(pm.predict_position);
+        float hash_pos = hash_position(pm.last_position);
+//        float hash_pos = hash_position(pm.predict_position);
         if (map.find(hash_pos) == map.end()) {
             // Insert a new pair
             vector<PointMass *> *vect = new vector<PointMass *>();
