@@ -73,6 +73,7 @@ struct Cloth {
   double viscosity_kernel(Vector3D pos_dif, double h);
   double calc_h();
   Vector3D calc_delta_q();
+  vector<PointMass *> *get_neighbors(PointMass &pm);
 
   // Cloth properties
   double width;
