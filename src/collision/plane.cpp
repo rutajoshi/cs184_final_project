@@ -61,28 +61,6 @@ void Plane::collide(PointMass &pm) {
     assert(pm.predict_position.y > -0.1);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //  Vector3D inter_position = pm.position;
 //
 //

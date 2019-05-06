@@ -33,6 +33,7 @@ struct PointMass {
   double num_collisions = 0;
   double mass;
   double lambda = 0.0;
+  std::vector<PointMass *> *neighbors;
 
   // mesh reference
   Halfedge *halfedge;
