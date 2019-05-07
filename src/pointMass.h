@@ -34,6 +34,7 @@ struct PointMass {
   double mass;
   double lambda = 0.0;
   std::vector<PointMass *> *neighbors;
+  float hash_value;
 
   // mesh reference
   Halfedge *halfedge;

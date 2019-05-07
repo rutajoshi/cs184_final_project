@@ -241,10 +241,6 @@ vector<PointMass *> *Cloth::get_neighbors(PointMass &pm) {
         std::cout << "\nHash position is nan for position = " << pm.position << "\n";
     }
     vector<PointMass *> *neighbors = new vector<PointMass *>();
-//    auto getter = map.find(hash_pos);
-//    if (getter != map.end()) {
-//        neighbors->insert(end(*neighbors), begin(*getter->second), end(*getter->second));
-//    }
 
     float h = calc_h();
     for (int dx = -1; dx <= 1; dx++) {
@@ -264,6 +260,11 @@ vector<PointMass *> *Cloth::get_neighbors(PointMass &pm) {
         }
     }
 
+    for (PointMass *neighbor : *neighbors) {
+        if ((pm.last_position - neighbor->last_position).norm() > 0.2) {
+            std::cout << "Something is wrong\n";
+        }
+    }
 
     return neighbors;
 }
@@ -278,6 +279,7 @@ void Cloth::build_spatial_map() {
     // TODO (Part 4): Build a spatial map out of all of the point masses.
     for (PointMass &pm : point_masses) {
         float hash_pos = hash_position(pm.last_position);
+        pm.hash_value = hash_pos;
 //        float hash_pos = hash_position(pm.predict_position);
         if (map.find(hash_pos) == map.end()) {
             // Insert a new pair
@@ -356,9 +358,9 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
         double mult = pow((pow(h,2) - pow(r,2)), 3);
         return 315. / 64. / M_PI / pow(h,9) * mult;
     }
-//    if (r > h) {
-//        std::cout << "\n kernel_poly6 r= " << r<<" h = " <<h<<"\n";
-//    }
+    if (r > h) {
+        std::cout << "\n kernel_poly6 r= " << r<<" h = " <<h<<"\n";
+    }
     assert(r > h);
     return 0;
 }
@@ -602,9 +604,9 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
 
 float Cloth::hash_position(Vector3D pos) {
     // TODO (Part 4): Hash a 3D position into a unique float identifier that represents membership in some 3D box volume.
-    double s = calc_h();
+    double s = 0.1;
     Vector3D hash_indices = Vector3D(trunc(pos.x / s), trunc(pos.y / s), trunc(pos.z / s));
-    float hash_value = hash_indices.x * pow(3, 3) + hash_indices.y * pow(3, 2) + hash_indices.z * pow(3, 1);
+    float hash_value = hash_indices.x * pow(7, 3) + hash_indices.y * pow(7, 2) + hash_indices.z * pow(7, 1);
     return hash_value;
 }
 
