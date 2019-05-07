@@ -121,16 +121,14 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 //        std::cout << "Hash of " << spot << " = " << hash_position(spot) << "\n";
 //    }
 
+    // external forces (gravity)
 //    #pragma omp parallel for
     for (PointMass &pm : point_masses) {
         // For all particles i, apply forces to get a velocity update.
         // Then set the predicted position using only the velocity.
         pm.velocity += (pm.forces / mass) * (delta_t);
         pm.predict_position = pm.position + delta_t * pm.velocity;
-        // Collide with all collision objects
-        for (CollisionObject* c : *collision_objects){
-            c->collide(pm);
-        }
+
         // Set the last position to the current predicted position for use in hashing to find neighbors
         pm.last_position = pm.predict_position;
 
@@ -142,12 +140,10 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     // Build a spatial map so you can easily find all the neighbors of a particle
     build_spatial_map();
 
+    // get neighbors for each point mass
 //    #pragma omp parallel for
     for (PointMass &pm : point_masses) {
         pm.neighbors = get_neighbors(pm);
-        if (pm.neighbors->size() > 1) {
-            std::cout << "hi Eric\n";
-        }
     }
 
     // For some number of iterations, do logic to update the predicted position
@@ -166,26 +162,14 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         }
 
-//        #pragma omp parallel for
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            self_collide(pm, simulation_steps);
-            assert(check_vector(pm.predict_position));
-        }
-
         // For each particle, calculate delta position and do collision detection/response
 //        #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
-            if (pm.delta_position.norm() > 0) {
-                std::cout << "delta_p = " << pm.delta_position << "\n";
-            }
-
-            // Collide with all collision objects
-            for (CollisionObject* c : *collision_objects){
-                c->collide(pm);
-            }
+//            if (pm.delta_position.norm() > 0) {
+//                std::cout << "delta_p = " << pm.delta_position << "\n";
+//            }
 
             assert(check_vector(pm.predict_position));
             // test
@@ -196,21 +180,29 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 //        #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             // Update predicted positions
-             pm.predict_position += pm.delta_position;
+            pm.predict_position += pm.delta_position;
             // validity test the predicted positions
             assert(check_vector(pm.predict_position));
         }
 
-    }
+        // once positions are updated, check for collisions
 
-    // After the 40th iteration, check for collisions again just in case
-    for (PointMass &pm : point_masses) {
-        // Collide with all collision objects
-        for (CollisionObject* c : *collision_objects){
-            c->collide(pm);
+        // self collisions
+        for (PointMass &pm : point_masses) {
+            assert(check_vector(pm.predict_position));
+            self_collide(pm, simulation_steps);
+            assert(check_vector(pm.predict_position));
+        }
+
+        // collisions with planes
+        for (PointMass &pm : point_masses) {
+            for (CollisionObject* c : *collision_objects){
+                c->collide(pm);
+            }
         }
     }
 
+    // update velocity, apply vorticity and viscosity constraints
 //    #pragma omp parallel for
     for (PointMass &pm : point_masses) {
         // Update velocity
@@ -221,20 +213,20 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
         // Update vorticity
-//        Vector3D force_vort = force_vorticity_i(pm);
+        Vector3D force_vort = force_vorticity_i(pm);
 //        std::cout << "Vorticity = " << force_vort << "\n";
-//        pm.velocity += (force_vort / mass) * delta_t;
+        pm.velocity += (force_vort / mass) * delta_t;
 
         assert(check_vector(pm.velocity));
 
         // Update viscosity (happens in place)
-//        viscosity_constraint(pm);
-//        assert(check_vector(pm.velocity));
+        viscosity_constraint(pm);
+        assert(check_vector(pm.velocity));
 
         // Update position
-        assert(pm.position.y > -0.1);
+        assert(pm.position.y > -0.15);
         pm.position = pm.predict_position;
-        assert(pm.position.y > -0.1);
+        assert(pm.position.y > -0.15);
 
 //        assert(pm.position.y <= 1.4);
 //        assert(pm.position.y >= -0.2);
@@ -340,7 +332,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
     Vector3D delta_p = Vector3D(0,0,0);
 
     // Tensile instability constants
-    double k = 0.1;
+    double k = 0.0001;
     int n = 4;
     Vector3D delta_q = calc_delta_q();//0.03; 0.2 * Vector3D(0.25, 0.25, 0.25); //Vector3D(0.03, 0.03, 0.03);
     double denom = kernel_poly6(delta_q, h);
@@ -355,11 +347,13 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
         assert(check_vector(neighbor -> predict_position));
         assert(check_vector(neighborToPm));
         Vector3D term = spiky_kernel_grad(neighborToPm, h);
-        std::cout << "Term = " << term << "\n";
+//        std::cout << "Term = " << term << "\n";
 
         // Tensile instability calculations
         double numer = kernel_poly6(neighborToPm, h);
-        double s_corr = 0; //-k * pow(numer / denom, n);
+        double s_corr = -k * pow(numer / denom, n);
+
+//        std::cout << "s_corr = " << s_corr << "\n";
 
         delta_p += (pm_i.lambda + neighbor->lambda + s_corr) * term;
     }
@@ -564,7 +558,7 @@ void Cloth::viscosity_constraint(PointMass &pm_i) {
             viscosity_sum += (neighbor->velocity - pm_i.velocity) * visc_kernel;
         }
     }
-//  std::cout << "Velocity before update = " << pm_i.velocity << std::endl;
+    std::cout << "Viscosity: change in velocity = " << c * viscosity_sum << std::endl;
     pm_i.velocity = pm_i.velocity + c*viscosity_sum;
 //    std::cout << "Velocity after update = " << pm_i.velocity << std::endl;
 }

@@ -20,7 +20,7 @@ struct PointMass {
   // static values
   bool pinned;
   Vector3D start_position;
-  double rest_density = 6378.0; //450000; // 1;
+  double rest_density = 3000; // 6378.0; //450000; // 1;
 
   // dynamic values
   Vector3D position;
