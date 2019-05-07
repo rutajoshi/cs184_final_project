@@ -9,7 +9,7 @@
 using namespace std;
 using namespace CGL;
 
-#define SURFACE_OFFSET 0.0001
+#define SURFACE_OFFSET 0.01
 
 #define BOUNCE_DAMPING_FACTOR 0.1
 
@@ -56,9 +56,11 @@ void Plane::collide(PointMass &pm) {
 
     prev_dot = sign(dot(normal, original_side - point));
     cur_dot = sign(dot(normal, current_side - point));
-    assert((cur_dot == prev_dot));
+//    assert((cur_dot == prev_dot));
 
-    assert(pm.predict_position.y > -0.1);
+    if(pm.predict_position.y < -0.1) {
+        std::cout << "Predicted position out of bounds = " << pm.predict_position << "\n";
+    }
 
 
 //  Vector3D inter_position = pm.position;
