@@ -3,6 +3,7 @@
 #include <math.h>
 #include <random>
 #include <vector>
+#include <string>
 
 #include "cloth.h"
 #include "collision/plane.h"
@@ -111,7 +112,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
                      vector<CollisionObject *> *collision_objects) {
     // Create a file to save point mass positions
     ofstream outputFile;
-    outputFile.open("simulate_data.txt", fstream::app);
+    string filename = "simulate_data_" + to_string(num_width_points) + ".txt";
+    outputFile.open(filename, fstream::app);
 
     outputFile << "Iteration\n";
     for (PointMass &pm : point_masses) {
