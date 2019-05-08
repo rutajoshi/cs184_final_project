@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include <random>
 #include <vector>
@@ -66,21 +67,21 @@ void Cloth::buildGrid() {
             for (int r = 0; r < num_height_points; r++) {
                 double rand_i = rand() % 2;
                 rand_i -= 1;
-                rand_i /= 5; //10;
+                rand_i /= 2; //10;
 //                rand_i = 0;
                 double x = start_left + (r + rand_i) * (unit_h);
                 x = max(0., x);
                 x = min(x, 1.);
                 rand_i = rand() % 2;
                 rand_i -= 1;
-                rand_i /= 5; //10;
+                rand_i /= 2; //10;
 //                rand_i = 0;
                 double y = start_right + (c + rand_i) * (unit_w);
                 y = max(0., y);
                 y = min(y, 1.);
                 rand_i = rand() % 2;
                 rand_i -= 1;
-                rand_i /= 5; //10;
+                rand_i /= 2; //10;
 //                rand_i = 0;
                 double z = start_bottom + (p + rand_i) * (unit_d);
                 z = max(0., z);
@@ -108,21 +109,23 @@ void Cloth::buildGrid() {
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
                      vector<Vector3D> external_accelerations,
                      vector<CollisionObject *> *collision_objects) {
+    // Create a file to save point mass positions
+    ofstream outputFile;
+    outputFile.open("simulate_data.txt", fstream::app);
+
+    outputFile << "Iteration\n";
+    for (PointMass &pm : point_masses) {
+        outputFile << pm.position << "\n";
+    }
+    outputFile << "\n\n";
+    outputFile.close();
+
     double mass = 1;
     double delta_t = 1.0f / frames_per_sec / simulation_steps; // 0.0083; // 0.016; //
     count_steps += 1;
 
-//    double x = 0;
-//    double y = 0;
-//    double z = 0;
-//    double d = 0.1;
-//    for (int i = 0; i < 20; i++) {
-//        Vector3D spot = Vector3D(x + i*d, y + i*d, z + i*d);
-//        std::cout << "Hash of " << spot << " = " << hash_position(spot) << "\n";
-//    }
-
     // external forces (gravity)
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for (PointMass &pm : point_masses) {
         // For all particles i, apply forces to get a velocity update.
         // Then set the predicted position using only the velocity.
@@ -141,7 +144,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     build_spatial_map();
 
     // get neighbors for each point mass
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for (PointMass &pm : point_masses) {
         pm.neighbors = get_neighbors(pm);
     }
@@ -149,35 +152,29 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     // For some number of iterations, do logic to update the predicted position
     for (int j = 0; j < 40; j++) {
         // For each particle, calculate lambda_i
-//        #pragma omp parallel for
+        #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             lambda_i(pm);
-//            pm.lambda = 0.0001;
             assert(check_vector(pm.predict_position));
 
             // validity check the lambda
             assert(!isnan(pm.lambda));
             assert(!isinf(pm.lambda));
-
         }
 
         // For each particle, calculate delta position and do collision detection/response
-//        #pragma omp parallel for
+        #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
             pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
-//            if (pm.delta_position.norm() > 0) {
-//                std::cout << "delta_p = " << pm.delta_position << "\n";
-//            }
 
             assert(check_vector(pm.predict_position));
-            // test
             assert(check_vector(pm.delta_position));
         }
 
         // For each particle, update the predicted position using delta position
-//        #pragma omp parallel for
+        #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             // Update predicted positions
             pm.predict_position += pm.delta_position;
@@ -195,6 +192,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         }
 
         // collisions with planes
+        #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             for (CollisionObject* c : *collision_objects){
                 c->collide(pm);
@@ -203,7 +201,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     }
 
     // update velocity, apply vorticity and viscosity constraints
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for (PointMass &pm : point_masses) {
         // Update velocity
         assert(check_vector(pm.velocity));
@@ -214,7 +212,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         // Update vorticity
         Vector3D force_vort = force_vorticity_i(pm);
-//        std::cout << "Vorticity = " << force_vort << "\n";
+        //std::cout << "Vorticity = " << force_vort << "\n";
         pm.velocity += (force_vort / mass) * delta_t;
 
         assert(check_vector(pm.velocity));
@@ -227,11 +225,6 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         assert(pm.position.y > -0.15);
         pm.position = pm.predict_position;
         assert(pm.position.y > -0.15);
-
-//        assert(pm.position.y <= 1.4);
-//        assert(pm.position.y >= -0.2);
-
-        // test
         assert(check_vector(pm.position));
     }
 
@@ -558,7 +551,7 @@ void Cloth::viscosity_constraint(PointMass &pm_i) {
             viscosity_sum += (neighbor->velocity - pm_i.velocity) * visc_kernel;
         }
     }
-    std::cout << "Viscosity: change in velocity = " << c * viscosity_sum << std::endl;
+//    std::cout << "Viscosity: change in velocity = " << c * viscosity_sum << std::endl;
     pm_i.velocity = pm_i.velocity + c*viscosity_sum;
 //    std::cout << "Velocity after update = " << pm_i.velocity << std::endl;
 }

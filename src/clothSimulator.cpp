@@ -248,6 +248,22 @@ void ClothSimulator::init() {
 
 bool ClothSimulator::isAlive() { return is_alive; }
 
+void ClothSimulator::simulateRemotely() {
+    glEnable(GL_DEPTH_TEST);
+    is_paused = false;
+
+    for (int i = 0; i < 100; i++) {
+        cout << "Iteration #: " << i << "\n";
+
+        vector<Vector3D> external_accelerations = {gravity};
+
+        for (int i = 0; i < simulation_steps; i++) {
+            cloth->simulate(frames_per_sec, simulation_steps, cp, external_accelerations, collision_objects);
+        }
+    }
+    is_paused = true;
+}
+
 void ClothSimulator::drawContents() {
   glEnable(GL_DEPTH_TEST);
 
