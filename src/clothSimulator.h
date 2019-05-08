@@ -24,7 +24,6 @@ public:
   void loadCollisionObjects(vector<CollisionObject *> *objects);
   virtual bool isAlive();
   virtual void drawContents();
-  void simulateRemotely();
 
   // Screen events
 
