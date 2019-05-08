@@ -16,7 +16,8 @@
 #include "collision/plane.h"
 #include "collision/sphere.h"
 #include "cloth.h"
-#include "clothSimulator.h"
+//#include "clothSimulator.h"
+#include "fluidSimulatorNoGui.h"
 #include "json.hpp"
 #include "misc/file_utils.h"
 
@@ -41,7 +42,7 @@ const string BOTTOM = "bottom";
 
 const unordered_set<string> VALID_KEYS = {SPHERE, PLANE, CLOTH, BACK, FRONT, LEFT, RIGHT, TOP, BOTTOM};
 
-ClothSimulator *app = nullptr;
+FluidSimulatorNoGui *app = nullptr;
 GLFWwindow *window = nullptr;
 Screen *screen = nullptr;
 
@@ -49,100 +50,100 @@ void error_callback(int error, const char* description) {
   puts(description);
 }
 
-void createGLContexts() {
-  if (!glfwInit()) {
-    return;
-  }
-
-  glfwSetTime(0);
-
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  glfwWindowHint(GLFW_SAMPLES, 0);
-  glfwWindowHint(GLFW_RED_BITS, 8);
-  glfwWindowHint(GLFW_GREEN_BITS, 8);
-  glfwWindowHint(GLFW_BLUE_BITS, 8);
-  glfwWindowHint(GLFW_ALPHA_BITS, 8);
-  glfwWindowHint(GLFW_STENCIL_BITS, 8);
-  glfwWindowHint(GLFW_DEPTH_BITS, 24);
-  glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
-
-  // Create a GLFWwindow object
-  window = glfwCreateWindow(800, 800, "Fluid Simulator", nullptr, nullptr);
-  if (window == nullptr) {
-    std::cout << "Failed to create GLFW window" << std::endl;
-    glfwTerminate();
-    return;
-  }
-  glfwMakeContextCurrent(window);
-
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    throw std::runtime_error("Could not initialize GLAD!");
-  }
-  glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
-
-  glClearColor(0.2f, 0.25f, 0.3f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  // Create a nanogui screen and pass the glfw pointer to initialize
-  screen = new Screen();
-  screen->initialize(window, true);
-
-  int width, height;
-  glfwGetFramebufferSize(window, &width, &height);
-  glViewport(0, 0, width, height);
-  glfwSwapInterval(1);
-  glfwSwapBuffers(window);
-}
-
-void setGLFWCallbacks() {
-  glfwSetCursorPosCallback(window, [](GLFWwindow *, double x, double y) {
-    if (!screen->cursorPosCallbackEvent(x, y)) {
-      app->cursorPosCallbackEvent(x / screen->pixelRatio(),
-                                  y / screen->pixelRatio());
-    }
-  });
-
-  glfwSetMouseButtonCallback(
-      window, [](GLFWwindow *, int button, int action, int modifiers) {
-        if (!screen->mouseButtonCallbackEvent(button, action, modifiers) ||
-            action == GLFW_RELEASE) {
-          app->mouseButtonCallbackEvent(button, action, modifiers);
-        }
-      });
-
-  glfwSetKeyCallback(
-      window, [](GLFWwindow *, int key, int scancode, int action, int mods) {
-        if (!screen->keyCallbackEvent(key, scancode, action, mods)) {
-          app->keyCallbackEvent(key, scancode, action, mods);
-        }
-      });
-
-  glfwSetCharCallback(window, [](GLFWwindow *, unsigned int codepoint) {
-    screen->charCallbackEvent(codepoint);
-  });
-
-  glfwSetDropCallback(window,
-                      [](GLFWwindow *, int count, const char **filenames) {
-                        screen->dropCallbackEvent(count, filenames);
-                        app->dropCallbackEvent(count, filenames);
-                      });
-
-  glfwSetScrollCallback(window, [](GLFWwindow *, double x, double y) {
-    if (!screen->scrollCallbackEvent(x, y)) {
-      app->scrollCallbackEvent(x, y);
-    }
-  });
-
-  glfwSetFramebufferSizeCallback(window,
-                                 [](GLFWwindow *, int width, int height) {
-                                   screen->resizeCallbackEvent(width, height);
-                                   app->resizeCallbackEvent(width, height);
-                                 });
-}
+//void createGLContexts() {
+//  if (!glfwInit()) {
+//    return;
+//  }
+//
+//  glfwSetTime(0);
+//
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+//  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//
+//  glfwWindowHint(GLFW_SAMPLES, 0);
+//  glfwWindowHint(GLFW_RED_BITS, 8);
+//  glfwWindowHint(GLFW_GREEN_BITS, 8);
+//  glfwWindowHint(GLFW_BLUE_BITS, 8);
+//  glfwWindowHint(GLFW_ALPHA_BITS, 8);
+//  glfwWindowHint(GLFW_STENCIL_BITS, 8);
+//  glfwWindowHint(GLFW_DEPTH_BITS, 24);
+//  glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+//
+//  // Create a GLFWwindow object
+//  window = glfwCreateWindow(800, 800, "Fluid Simulator", nullptr, nullptr);
+//  if (window == nullptr) {
+//    std::cout << "Failed to create GLFW window" << std::endl;
+//    glfwTerminate();
+//    return;
+//  }
+//  glfwMakeContextCurrent(window);
+//
+//  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+//    throw std::runtime_error("Could not initialize GLAD!");
+//  }
+//  glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
+//
+//  glClearColor(0.2f, 0.25f, 0.3f, 1.0f);
+//  glClear(GL_COLOR_BUFFER_BIT);
+//
+//  // Create a nanogui screen and pass the glfw pointer to initialize
+//  screen = new Screen();
+//  screen->initialize(window, true);
+//
+//  int width, height;
+//  glfwGetFramebufferSize(window, &width, &height);
+//  glViewport(0, 0, width, height);
+//  glfwSwapInterval(1);
+//  glfwSwapBuffers(window);
+//}
+//
+//void setGLFWCallbacks() {
+//  glfwSetCursorPosCallback(window, [](GLFWwindow *, double x, double y) {
+//    if (!screen->cursorPosCallbackEvent(x, y)) {
+//      app->cursorPosCallbackEvent(x / screen->pixelRatio(),
+//                                  y / screen->pixelRatio());
+//    }
+//  });
+//
+//  glfwSetMouseButtonCallback(
+//      window, [](GLFWwindow *, int button, int action, int modifiers) {
+//        if (!screen->mouseButtonCallbackEvent(button, action, modifiers) ||
+//            action == GLFW_RELEASE) {
+//          app->mouseButtonCallbackEvent(button, action, modifiers);
+//        }
+//      });
+//
+//  glfwSetKeyCallback(
+//      window, [](GLFWwindow *, int key, int scancode, int action, int mods) {
+//        if (!screen->keyCallbackEvent(key, scancode, action, mods)) {
+//          app->keyCallbackEvent(key, scancode, action, mods);
+//        }
+//      });
+//
+//  glfwSetCharCallback(window, [](GLFWwindow *, unsigned int codepoint) {
+//    screen->charCallbackEvent(codepoint);
+//  });
+//
+//  glfwSetDropCallback(window,
+//                      [](GLFWwindow *, int count, const char **filenames) {
+//                        screen->dropCallbackEvent(count, filenames);
+//                        app->dropCallbackEvent(count, filenames);
+//                      });
+//
+//  glfwSetScrollCallback(window, [](GLFWwindow *, double x, double y) {
+//    if (!screen->scrollCallbackEvent(x, y)) {
+//      app->scrollCallbackEvent(x, y);
+//    }
+//  });
+//
+//  glfwSetFramebufferSizeCallback(window,
+//                                 [](GLFWwindow *, int width, int height) {
+//                                   screen->resizeCallbackEvent(width, height);
+//                                   app->resizeCallbackEvent(width, height);
+//                                 });
+//}
 
 void usageError(const char *binaryName) {
   printf("Usage: %s [options]\n", binaryName);
@@ -487,16 +488,16 @@ int main(int argc, char **argv) {
     std::cout << "Warn: Unable to load from file: " << file_to_load_from << std::endl;
   }
 
-  glfwSetErrorCallback(error_callback);
+//  glfwSetErrorCallback(error_callback);
 
-  createGLContexts();
+//  createGLContexts();
 
   // Initialize the Cloth object
   cloth.buildGrid();
   cloth.buildClothMesh();
 
-  // Initialize the ClothSimulator object
-  app = new ClothSimulator(project_root, screen);
+  // Initialize the FluidSimulatorNoGui object
+  app = new FluidSimulatorNoGui(project_root, screen);
   app->loadCloth(&cloth);
   app->loadClothParameters(&cp);
   app->loadCollisionObjects(&objects);
@@ -504,34 +505,36 @@ int main(int argc, char **argv) {
 
   // Call this after all the widgets have been defined
 
-  screen->setVisible(true);
-  screen->performLayout();
+//  screen->setVisible(true);
+//  screen->performLayout();
 
   // Attach callbacks to the GLFW window
 
-  setGLFWCallbacks();
+//  setGLFWCallbacks();
 
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
+//  while (!glfwWindowShouldClose(window)) {
+//    glfwPollEvents();
+//
+//    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+////    app->drawContents();
+//    app->simulateRemotely();
+//
+//    // Draw nanogui
+//    screen->drawContents();
+//    screen->drawWidgets();
+//
+//    glfwSwapBuffers(window);
+//
+//    glfwSetWindowShouldClose(window, 1);
+//
+////    if (!app->isAlive()) {
+////      glfwSetWindowShouldClose(window, 1);
+////    }
+//  }
 
-    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//    app->drawContents();
-    app->simulateRemotely();
-
-    // Draw nanogui
-    screen->drawContents();
-    screen->drawWidgets();
-
-    glfwSwapBuffers(window);
-
-    glfwSetWindowShouldClose(window, 1);
-
-//    if (!app->isAlive()) {
-//      glfwSetWindowShouldClose(window, 1);
-//    }
-  }
+  app->simulateRemotely();
 
   return 0;
 }
