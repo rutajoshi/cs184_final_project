@@ -26,9 +26,6 @@ using namespace std;
 
 ClothSimulator::ClothSimulator(std::string project_root)
         : m_project_root(project_root) {
-    if (cloth) delete cloth;
-    if (cp) delete cp;
-    if (collision_objects) delete collision_objects;
 }
 
 ClothSimulator::~ClothSimulator() {

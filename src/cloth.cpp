@@ -117,7 +117,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
     outputFile << "Iteration\n";
     for (PointMass &pm : point_masses) {
-        outputFile << pm.position << "\n";
+        outputFile << pm.position.x << "," << pm.position.y << "," << pm.position.z << "\n";
     }
     outputFile << "\n\n";
     outputFile.close();
@@ -457,9 +457,9 @@ double Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
 
 void Cloth::lambda_i(PointMass &pm) {
     double rho_i = calculate_density_neighbors(pm);
-    if ((int)rho_i != 0) {
-        std::cout << "rho_i = " << rho_i << "\n";
-    }
+//    if ((int)rho_i != 0) {
+//        std::cout << "rho_i = " << rho_i << "\n";
+//    }
     double rho_o = pm.rest_density;
     double C_i = (rho_i / rho_o) - 1.0;
 

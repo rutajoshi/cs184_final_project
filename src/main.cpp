@@ -384,6 +384,8 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
 
   i.close();
 
+  std::cout << "Closed i \n";
+
   return true;
 }
 
