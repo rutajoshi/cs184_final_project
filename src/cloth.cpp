@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 #include <string>
+#include <unistd.h>
 
 #include "cloth.h"
 #include "collision/plane.h"
@@ -101,7 +102,7 @@ void Cloth::buildGrid() {
                 // NOTE: density is from pinned2.json
                 pm.mass = 1; //width * height * depth * 1000 / num_width_points / num_height_points / num_depth_points;
                 pm.forces = Vector3D(0, -9.8, 0) * pm.mass;
-                point_masses.push_back(pm);
+                point_masses.emplace_back(pm);
             }
         }
     }
@@ -118,17 +119,40 @@ void Cloth::loadTrajectoriesFromFile(string filename) {
 
     // go through each line in the file and append to the correct point mass's trajectory
     string line;
+    string delim = ",";
     for (int i = 0; i < 200; i++) {
+        // read the first line which says Iteration
         getline(inFile, line);
         if (line.compare("Iteration") != 0) {
             cerr << "Malformed file!\n";
             exit(1);
         }
-        for (int j = 0; j < point_masses.size(); j++) {
+
+        // read all 200 point mass positions and push to trajectories
+        for (PointMass &pm : point_masses) {
             getline(inFile, line);
-            Vector3D pos = // get vector3d from string;
-            point_masses[i].trajectory.push_back(pos);
+
+            // get the doubles out of the tuple on the line
+            Vector3D point_position = Vector3D(0, 0, 0);
+            size_t pos = 0;
+            string token;
+            int k = 0;
+            while ((pos = line.find(delim)) != std::string::npos) {
+                token = line.substr(0, pos);
+                point_position[k] = stof(token);
+                k += 1;
+                line.erase(0, pos + delim.length());
+            }
+            point_position[k] = stof(line);
+
+            // get vector3d from string;
+            pm.trajectory.emplace_back(Vector3D(point_position));
+            assert(pm.trajectory.size() > 0);
         }
+
+        // read 2 newline characters
+        getline(inFile, line);
+        getline(inFile, line);
     }
 
     inFile.close();
@@ -138,9 +162,10 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
                      vector<Vector3D> external_accelerations,
                      vector<CollisionObject *> *collision_objects, int iteration) {
     // update point_mass positions
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (PointMass &pm : point_masses) {
         pm.position = pm.trajectory[iteration];
+        usleep(500);
     }
 }
 
