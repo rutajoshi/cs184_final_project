@@ -248,15 +248,20 @@ void ClothSimulator::init() {
 
 bool ClothSimulator::isAlive() { return is_alive; }
 
-void ClothSimulator::drawContents() {
+void ClothSimulator::drawContents(int iteration) {
   glEnable(GL_DEPTH_TEST);
+
+  is_paused = false;
+
+  cloth->loadTrajectoriesFromFile("simulate_data_" + cloth->num_width_points + ".txt");
 
   if (!is_paused) {
     vector<Vector3D> external_accelerations = {gravity};
 
     for (int i = 0; i < simulation_steps; i++) {
-      cloth->simulate(frames_per_sec, simulation_steps, cp, external_accelerations, collision_objects);
+        cloth->simulate(frames_per_sec, simulation_steps, cp, external_accelerations, collision_objects, iteration*simulation_steps + i);
     }
+
   }
 
   // Bind the active shader
@@ -632,7 +637,7 @@ bool ClothSimulator::keyCallbackEvent(int key, int scancode, int action,
     case 'N':
       if (is_paused) {
         is_paused = false;
-        drawContents();
+        drawContents(0);
         is_paused = true;
       }
       break;

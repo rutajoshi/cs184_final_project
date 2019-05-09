@@ -107,129 +107,31 @@ void Cloth::buildGrid() {
     }
 }
 
+void Cloth::loadTrajectoriesFromFile(string filename) {
+    // open the file
+    ifstream inFile;
+    inFile.open(filename);
+    if (!inFile) {
+        cerr << "Unable to open file: " << filename << "\n";
+        exit(1);
+    }
+
+    // go through each line in the file and append to the correct point mass's trajectory
+    while () {
+
+    }
+
+    inFile.close();
+}
+
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
                      vector<Vector3D> external_accelerations,
-                     vector<CollisionObject *> *collision_objects) {
-    // Create a file to save point mass positions
-    ofstream outputFile;
-    string filename = "simulate_data_" + to_string(num_width_points) + ".txt";
-    outputFile.open(filename, fstream::app);
-
-    outputFile << "Iteration\n";
-    for (PointMass &pm : point_masses) {
-        outputFile << pm.position << "\n";
-    }
-    outputFile << "\n\n";
-    outputFile.close();
-
-    double mass = 1;
-    double delta_t = 1.0f / frames_per_sec / simulation_steps; // 0.0083; // 0.016; //
-    count_steps += 1;
-
-    // external forces (gravity)
+                     vector<CollisionObject *> *collision_objects, int iteration) {
+    // update point_mass positions
     #pragma omp parallel for
     for (PointMass &pm : point_masses) {
-        // For all particles i, apply forces to get a velocity update.
-        // Then set the predicted position using only the velocity.
-        pm.velocity += (pm.forces / mass) * (delta_t);
-        pm.predict_position = pm.position + delta_t * pm.velocity;
-
-        // Set the last position to the current predicted position for use in hashing to find neighbors
-        pm.last_position = pm.predict_position;
-
-        // validity check the velocity and predicted position
-        assert(check_vector(pm.velocity));
-        assert(check_vector(pm.predict_position));
+        pm.position = pm.trajectory[iteration];
     }
-
-    // Build a spatial map so you can easily find all the neighbors of a particle
-    build_spatial_map();
-
-    // get neighbors for each point mass
-    #pragma omp parallel for
-    for (PointMass &pm : point_masses) {
-        pm.neighbors = get_neighbors(pm);
-    }
-
-    // For some number of iterations, do logic to update the predicted position
-    for (int j = 0; j < 40; j++) {
-        // For each particle, calculate lambda_i
-        #pragma omp parallel for
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            lambda_i(pm);
-            assert(check_vector(pm.predict_position));
-
-            // validity check the lambda
-            assert(!isnan(pm.lambda));
-            assert(!isinf(pm.lambda));
-        }
-
-        // For each particle, calculate delta position and do collision detection/response
-        #pragma omp parallel for
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            pm.delta_position = calculate_delta_p(pm);// CALCULATE delta_p here
-
-            assert(check_vector(pm.predict_position));
-            assert(check_vector(pm.delta_position));
-        }
-
-        // For each particle, update the predicted position using delta position
-        #pragma omp parallel for
-        for (PointMass &pm : point_masses) {
-            // Update predicted positions
-            pm.predict_position += pm.delta_position;
-            // validity test the predicted positions
-            assert(check_vector(pm.predict_position));
-        }
-
-        // once positions are updated, check for collisions
-
-        // self collisions
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            self_collide(pm, simulation_steps);
-            assert(check_vector(pm.predict_position));
-        }
-
-        // collisions with planes
-        #pragma omp parallel for
-        for (PointMass &pm : point_masses) {
-            for (CollisionObject* c : *collision_objects){
-                c->collide(pm);
-            }
-        }
-    }
-
-    // update velocity, apply vorticity and viscosity constraints
-    #pragma omp parallel for
-    for (PointMass &pm : point_masses) {
-        // Update velocity
-        assert(check_vector(pm.velocity));
-        Vector3D change_in_pos = (pm.predict_position - pm.position);
-        pm.velocity = (1.0 / delta_t) * change_in_pos;
-        assert(check_vector(pm.velocity));
-
-
-        // Update vorticity
-        Vector3D force_vort = force_vorticity_i(pm);
-        //std::cout << "Vorticity = " << force_vort << "\n";
-        pm.velocity += (force_vort / mass) * delta_t;
-
-        assert(check_vector(pm.velocity));
-
-        // Update viscosity (happens in place)
-        viscosity_constraint(pm);
-        assert(check_vector(pm.velocity));
-
-        // Update position
-        assert(pm.position.y > -0.15);
-        pm.position = pm.predict_position;
-        assert(pm.position.y > -0.15);
-        assert(check_vector(pm.position));
-    }
-
 }
 
 vector<PointMass *> *Cloth::get_neighbors(PointMass &pm) {

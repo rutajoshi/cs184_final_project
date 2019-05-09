@@ -49,9 +49,11 @@ struct Cloth {
 
   void buildGrid();
 
+  void loadTrajectoriesFromFile(string filename);
+
   void simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
                 vector<Vector3D> external_accelerations,
-                vector<CollisionObject *> *collision_objects);
+                vector<CollisionObject *> *collision_objects, int iteration);
 
   void reset();
   void buildClothMesh();

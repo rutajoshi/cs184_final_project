@@ -409,126 +409,127 @@ bool find_project_root(const std::vector<std::string>& search_paths, std::string
 }
 
 int main(int argc, char **argv) {
-  // Attempt to find project root
-  std::vector<std::string> search_paths = {
-    ".",
-    "..",
-    "../.."
-  };
-  std::string project_root;
-  bool found_project_root = find_project_root(search_paths, project_root);
+    // Attempt to find project root
+    std::vector<std::string> search_paths = {
+            ".",
+            "..",
+            "../.."
+    };
+    std::string project_root;
+    bool found_project_root = find_project_root(search_paths, project_root);
 
-  Cloth cloth;
-  ClothParameters cp;
-  vector<CollisionObject *> objects;
+    Cloth cloth;
+    ClothParameters cp;
+    vector<CollisionObject *> objects;
 
-  int c;
+    int c;
 
-  int sphere_num_lat = 40;
-  int sphere_num_lon = 40;
+    int sphere_num_lat = 40;
+    int sphere_num_lon = 40;
 
-  std::string file_to_load_from;
-  bool file_specified = false;
+    std::string file_to_load_from;
+    bool file_specified = false;
 
-  while ((c = getopt (argc, argv, "f:r:a:o:")) != -1) {
-    switch (c) {
-      case 'f': {
-        file_to_load_from = optarg;
-        file_specified = true;
-        break;
-      }
-      case 'r': {
-        project_root = optarg;
-        if (!is_valid_project_root(project_root)) {
-          std::cout << "Warn: Could not find required file \"shaders/Default.vert\" in specified project root: " << project_root << std::endl;
+    while ((c = getopt(argc, argv, "f:r:a:o:")) != -1) {
+        switch (c) {
+            case 'f': {
+                file_to_load_from = optarg;
+                file_specified = true;
+                break;
+            }
+            case 'r': {
+                project_root = optarg;
+                if (!is_valid_project_root(project_root)) {
+                    std::cout
+                            << "Warn: Could not find required file \"shaders/Default.vert\" in specified project root: "
+                            << project_root << std::endl;
+                }
+                found_project_root = true;
+                break;
+            }
+            case 'a': {
+                int arg_int = atoi(optarg);
+                if (arg_int < 1) {
+                    arg_int = 1;
+                }
+                sphere_num_lat = arg_int;
+                break;
+            }
+            case 'o': {
+                int arg_int = atoi(optarg);
+                if (arg_int < 1) {
+                    arg_int = 1;
+                }
+                sphere_num_lon = arg_int;
+                break;
+            }
+            default: {
+                usageError(argv[0]);
+                break;
+            }
         }
-        found_project_root = true;
-        break;
-      }
-      case 'a': {
-        int arg_int = atoi(optarg);
-        if (arg_int < 1) {
-          arg_int = 1;
-        }
-        sphere_num_lat = arg_int;
-        break;
-      }
-      case 'o': {
-        int arg_int = atoi(optarg);
-        if (arg_int < 1) {
-          arg_int = 1;
-        }
-        sphere_num_lon = arg_int;
-        break;
-      }
-      default: {
-        usageError(argv[0]);
-        break;
-      }
     }
-  }
 
-  if (!found_project_root) {
-    std::cout << "Error: Could not find required file \"shaders/Default.vert\" anywhere!" << std::endl;
-    return -1;
-  } else {
-    std::cout << "Loading files starting from: " << project_root << std::endl;
-  }
+    if (!found_project_root) {
+        std::cout << "Error: Could not find required file \"shaders/Default.vert\" anywhere!" << std::endl;
+        return -1;
+    } else {
+        std::cout << "Loading files starting from: " << project_root << std::endl;
+    }
 
-  if (!file_specified) { // No arguments, default initialization
-    std::stringstream def_fname;
-    def_fname << project_root;
-    def_fname << "/scene/pinned2.json";
-    file_to_load_from = def_fname.str();
-  }
+    if (!file_specified) { // No arguments, default initialization
+        std::stringstream def_fname;
+        def_fname << project_root;
+        def_fname << "/scene/pinned2.json";
+        file_to_load_from = def_fname.str();
+    }
 
-  bool success = loadObjectsFromFile(file_to_load_from, &cloth, &cp, &objects, sphere_num_lat, sphere_num_lon);
-  if (!success) {
-    std::cout << "Warn: Unable to load from file: " << file_to_load_from << std::endl;
-  }
+    bool success = loadObjectsFromFile(file_to_load_from, &cloth, &cp, &objects, sphere_num_lat, sphere_num_lon);
+    if (!success) {
+        std::cout << "Warn: Unable to load from file: " << file_to_load_from << std::endl;
+    }
 
-  glfwSetErrorCallback(error_callback);
+    glfwSetErrorCallback(error_callback);
 
-  createGLContexts();
+    createGLContexts();
 
-  // Initialize the Cloth object
-  cloth.buildGrid();
-  cloth.buildClothMesh();
+    // Initialize the Cloth object
+    cloth.buildGrid();
+    cloth.buildClothMesh();
 
-  // Initialize the ClothSimulator object
-  app = new ClothSimulator(project_root, screen);
-  app->loadCloth(&cloth);
-  app->loadClothParameters(&cp);
-  app->loadCollisionObjects(&objects);
-  app->init();
+    // Initialize the ClothSimulator object
+    app = new ClothSimulator(project_root, screen);
+    app->loadCloth(&cloth);
+    app->loadClothParameters(&cp);
+    app->loadCollisionObjects(&objects);
+    app->init();
 
-  // Call this after all the widgets have been defined
+    // Call this after all the widgets have been defined
 
-  screen->setVisible(true);
-  screen->performLayout();
+    screen->setVisible(true);
+    screen->performLayout();
 
-  // Attach callbacks to the GLFW window
+    // Attach callbacks to the GLFW window
 
-  setGLFWCallbacks();
+    setGLFWCallbacks();
 
-  while (!glfwWindowShouldClose(window)) {
+//  while (!glfwWindowShouldClose(window)) {
+  for (int i = 0; i < 100; i++) {
     glfwPollEvents();
 
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    app->drawContents();
+    app->drawContents(i);
 
     // Draw nanogui
     screen->drawContents();
     screen->drawWidgets();
 
     glfwSwapBuffers(window);
-
-    if (!app->isAlive()) {
-      glfwSetWindowShouldClose(window, 1);
-    }
   }
+  glfwSetWindowShouldClose(window, 1);
+//  }
 
   return 0;
 }
