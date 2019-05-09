@@ -244,6 +244,8 @@ void ClothSimulator::init() {
 
   camera.configure(camera_info, screen_w, screen_h);
   canonicalCamera.configure(camera_info, screen_w, screen_h);
+
+  cloth->loadTrajectoriesFromFile("simulate_data_" + to_string(cloth->num_width_points) + ".txt");
 }
 
 bool ClothSimulator::isAlive() { return is_alive; }
@@ -252,8 +254,6 @@ void ClothSimulator::drawContents(int iteration) {
   glEnable(GL_DEPTH_TEST);
 
   is_paused = false;
-
-  cloth->loadTrajectoriesFromFile("simulate_data_" + cloth->num_width_points + ".txt");
 
   if (!is_paused) {
     vector<Vector3D> external_accelerations = {gravity};
