@@ -327,10 +327,10 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
     Vector3D delta_p = Vector3D(0,0,0);
 
     // Tensile instability constants
-    double k = 0.0001;
+    double k = 500;
     int n = 4;
     Vector3D delta_q = calc_delta_q();//0.03; 0.2 * Vector3D(0.25, 0.25, 0.25); //Vector3D(0.03, 0.03, 0.03);
-    double denom = kernel_poly6(delta_q, h);
+    double s_corr_denom = spiky_kernel(delta_q, h);
 
     assert(check_vector(pm_i.predict_position));
 
@@ -341,16 +341,16 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
         Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
         assert(check_vector(neighbor -> predict_position));
         assert(check_vector(neighborToPm));
-        Vector3D term = spiky_kernel_grad(neighborToPm, h);
+        Vector3D p_spiky_grad = spiky_kernel_grad(neighborToPm, h);
 //        std::cout << "Term = " << term << "\n";
 
         // Tensile instability calculations
-        double numer = kernel_poly6(neighborToPm, h);
-        double s_corr = -k * pow(numer / denom, n);
+        double s_corr_numer = spiky_kernel(neighborToPm, h);
+        double s_corr = -k * pow(s_corr_numer / s_corr_denom, n);
 
-//        std::cout << "s_corr = " << s_corr << "\n";
+        std::cout << "s_corr = " << s_corr << "\n";
 
-        delta_p += (pm_i.lambda + neighbor->lambda + s_corr) * term;
+        delta_p += (pm_i.lambda + neighbor->lambda + s_corr) * p_spiky_grad;
     }
     delta_p = (1.0 / pm_i.rest_density) * delta_p;
     return delta_p;
@@ -385,6 +385,23 @@ double Cloth::calculate_density_neighbors(PointMass &pm) {
         sum += pm.mass * kernel_poly6(neighborToPm, h);
     }
     return sum;
+}
+
+double Cloth::spiky_kernel(Vector3D pos_diff, double h) {
+    double r = pos_diff.norm();
+    assert(!isnan(r));
+    assert(!isinf(r));
+
+    if (0 <= r && r <= h) {
+        assert(r <= h);
+        double multiple = 15. / (M_PI * pow(h, 6));
+        return multiple * pow(h - r, 3);
+    }
+    if (r > h) {
+        std::cout << "\n spiky_kernel r= " << r << " h = " << h << "\n";
+    }
+    assert(r > h);
+    return 0;
 }
 
 Vector3D Cloth::spiky_kernel_grad(Vector3D pos_dif, double h) {
@@ -470,7 +487,7 @@ void Cloth::lambda_i(PointMass &pm) {
             continue;
         }
         double grad_Ci_pk_norm = delta_constraint_pk(pm, *neighbor);
-        
+
         assert(!(isinf(grad_Ci_pk_norm)));
         assert(!isnan(grad_Ci_pk_norm));
         denom += pow(grad_Ci_pk_norm, 2);
@@ -480,6 +497,8 @@ void Cloth::lambda_i(PointMass &pm) {
     assert(!isnan(denom) && !(isinf(denom)));
 
     double lambda = -1.0 * C_i / denom;
+
+//    cout << "lambda = " << lambda << "\n";
 
     pm.lambda = lambda;
 }
