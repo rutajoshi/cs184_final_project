@@ -41,9 +41,9 @@
     "width": 1,
     "height": 1,
     "depth": 1,
-    "num_width_points": 8,
-    "num_height_points": 8,
-    "num_depth_points": 8,
+    "num_width_points": 12,
+    "num_height_points": 12,
+    "num_depth_points": 12,
     "thickness": 0.0095
   }
 }

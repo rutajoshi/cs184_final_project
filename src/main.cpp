@@ -16,8 +16,7 @@
 #include "collision/plane.h"
 #include "collision/sphere.h"
 #include "cloth.h"
-//#include "clothSimulator.h"
-#include "fluidSimulatorNoGui.h"
+#include "clothSimulator.h"
 #include "json.hpp"
 #include "misc/file_utils.h"
 
@@ -42,13 +41,13 @@ const string BOTTOM = "bottom";
 
 const unordered_set<string> VALID_KEYS = {SPHERE, PLANE, CLOTH, BACK, FRONT, LEFT, RIGHT, TOP, BOTTOM};
 
-FluidSimulatorNoGui *app = nullptr;
-GLFWwindow *window = nullptr;
-Screen *screen = nullptr;
+ClothSimulator *app = nullptr;
+//GLFWwindow *window = nullptr;
+//Screen *screen = nullptr;
 
-void error_callback(int error, const char* description) {
-  puts(description);
-}
+//void error_callback(int error, const char* description) {
+//  puts(description);
+//}
 
 //void createGLContexts() {
 //  if (!glfwInit()) {
@@ -496,8 +495,8 @@ int main(int argc, char **argv) {
   cloth.buildGrid();
   cloth.buildClothMesh();
 
-  // Initialize the FluidSimulatorNoGui object
-  app = new FluidSimulatorNoGui(project_root, screen);
+  // Initialize the ClothSimulator object
+  app = new ClothSimulator(project_root);
   app->loadCloth(&cloth);
   app->loadClothParameters(&cp);
   app->loadCollisionObjects(&objects);
