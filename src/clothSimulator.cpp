@@ -350,7 +350,7 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
     Vector3D pos = pm.position;
     positions.col(si) << pos.x, pos.y, pos.z, 1.0;
     vert.col(si) << 1.0;
-    start_heights.col(si) << pm.start_position.y;
+    start_heights.col(si) << pm.position.y;
     si += 1;
   }
 
