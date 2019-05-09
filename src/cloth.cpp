@@ -259,7 +259,7 @@ vector<PointMass *> *Cloth::get_neighbors(PointMass &pm) {
                     for (PointMass *neighbor : *nearby_neighbors) {
                         // furthest away you can be if you are a neighbor in a hash box diagonal from the primary box
 //                        if ((pm.last_position - neighbor->last_position).norm() < 0.3464101615137755) {
-                        if ((pm.last_position - neighbor->last_position).norm() < 0.1) {
+                        if ((pm.last_position - neighbor->last_position).norm() < 0.15) {
                             neighbors->push_back(neighbor);
                         }
 //                        else {
@@ -363,13 +363,12 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
     assert(!isinf(r));
 
     if (0 <= r && r <= h) {
-        assert(r <= h);
         double mult = pow((pow(h,2) - pow(r,2)), 3);
-        return 315. / 64. / M_PI / pow(h,9) * mult;
+        return 315. / (64. * M_PI * pow(h,9)) * mult;
     }
-    if (r > h) {
-        std::cout << "\n kernel_poly6 r= " << r<<" h = " <<h<<"\n";
-    }
+//    if (r > h) {
+//        std::cout << "\n kernel_poly6 r= " << r<<" h = " <<h<<"\n";
+//    }
     assert(r > h);
     return 0;
 }
@@ -431,7 +430,6 @@ double Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
                 Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
                 assert(check_vector(neighborToPm));
                 sum += spiky_kernel_grad(neighborToPm, h);
-
             }
         }
         sum /= (pm_i.rest_density);
@@ -613,7 +611,7 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
 
 float Cloth::hash_position(Vector3D pos) {
     // TODO (Part 4): Hash a 3D position into a unique float identifier that represents membership in some 3D box volume.
-    double s = 0.1;
+    double s = 1.5 * (1.0 / (num_width_points * num_height_points * num_depth_points));
     Vector3D hash_indices = Vector3D(trunc((pos.x + 5) / s), trunc((pos.y + 5) / s), trunc((pos.z + 5) / s));
     float hash_value = hash_indices.x * pow(7, 3) + hash_indices.y * pow(7, 2) + hash_indices.z * pow(7, 1);
     return hash_value;
