@@ -117,8 +117,18 @@ void Cloth::loadTrajectoriesFromFile(string filename) {
     }
 
     // go through each line in the file and append to the correct point mass's trajectory
-    while () {
-
+    string line;
+    for (int i = 0; i < 200; i++) {
+        getline(inFile, line);
+        if (line.compare("Iteration") != 0) {
+            cerr << "Malformed file!\n";
+            exit(1);
+        }
+        for (int j = 0; j < point_masses.size(); j++) {
+            getline(inFile, line);
+            Vector3D pos = // get vector3d from string;
+            point_masses[i].trajectory.push_back(pos);
+        }
     }
 
     inFile.close();
