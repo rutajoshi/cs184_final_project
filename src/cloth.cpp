@@ -117,11 +117,12 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     ofstream outputFile;
     string filename = "simulate_data_" + to_string(num_width_points) + ".txt";
     outputFile.open(filename, fstream::app);
-    std::cout << cp->density<<"\n";
+    
     double density = 4000;
-    density *= (cp -> damping + .0001);
+    density *= (cp -> damping + .00001);
+    std::cout << density<<"\n";
 
-    outputFile << "Iteration\n";
+    // outputFile << "Iteration\n";
     for (PointMass &pm : point_masses) {
         pm.rest_density = density;
         outputFile << pm.position << "\n";
