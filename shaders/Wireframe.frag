@@ -14,7 +14,7 @@ void main() {
   if(out_vertex == 1.0 && pt.x*pt.x+pt.y*pt.y > 0.25)
       discard;
   if(out_vertex == 1.0) 
-  	out_color = vec4(0, 0, out_height, 1);
+  	out_color = vec4(out_height, .1, 1.0 - out_height , 1);
   if(out_vertex != 1.0) 
   	out_color = vec4(.1,0,0,.001);
 }

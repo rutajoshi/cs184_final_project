@@ -213,15 +213,15 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
         // Update vorticity
-        Vector3D force_vort = force_vorticity_i(pm);
-        //std::cout << "Vorticity = " << force_vort << "\n";
-        pm.velocity += (force_vort / mass) * delta_t;
-
-        assert(check_vector(pm.velocity));
+//        Vector3D force_vort = force_vorticity_i(pm);
+//        //std::cout << "Vorticity = " << force_vort << "\n";
+//        pm.velocity += (force_vort / mass) * delta_t;
+//
+//        assert(check_vector(pm.velocity));
 
         // Update viscosity (happens in place)
-        viscosity_constraint(pm);
-        assert(check_vector(pm.velocity));
+//        viscosity_constraint(pm);
+//        assert(check_vector(pm.velocity));
 
         // Update position
         assert(pm.position.y > -0.15);
@@ -306,6 +306,7 @@ double Cloth::calc_h() {
 //    return 0.1;
 //    return 0.25;
     return 8;
+//    return 8;
 }
 
 Vector3D Cloth::calc_delta_q() {
@@ -348,7 +349,7 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
         double s_corr_numer = spiky_kernel(neighborToPm, h);
         double s_corr = -k * pow(s_corr_numer / s_corr_denom, n);
 
-        std::cout << "s_corr = " << s_corr << "\n";
+//        std::cout << "s_corr = " << s_corr << "\n";
 
         delta_p += (pm_i.lambda + neighbor->lambda + s_corr) * p_spiky_grad;
     }
@@ -375,6 +376,9 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
 
 double Cloth::calculate_density_neighbors(PointMass &pm) {
     vector<PointMass *> *neighbors = pm.neighbors;
+//    if (pm.neighbors->size() > 1) {
+//        cout << "yo\n";
+//    }
     double h = calc_h();
     double sum = 0;
     for (PointMass *neighbor : *neighbors) {
@@ -446,7 +450,13 @@ double Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
             } else {
                 Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
                 assert(check_vector(neighborToPm));
-                sum += spiky_kernel_grad(neighborToPm, h);
+                Vector3D addend = Vector3D();
+                double r = neighborToPm.norm();
+                if (r <= h) {
+                    neighborToPm.normalize();
+                    addend = (-90.0 / (M_PI * pow(h, 6))) * pow(h-r, 2) * neighborToPm;
+                }
+                sum += addend;
             }
         }
         sum /= (pm_i.rest_density);
@@ -457,7 +467,15 @@ double Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
 
         assert(check_vector(pi_pk));
 
-        sum = (-1.0 / pm_i.rest_density) * spiky_kernel_grad(pi_pk, h);
+        Vector3D addend = Vector3D();
+        double r = pi_pk.norm();
+        if (0 < r && r <= h) {
+            assert(r > 0);
+            pi_pk.normalize();
+            addend = (90.0 / (M_PI * pow(h, 6))) * pow(h-r, 2) * pi_pk;
+        }
+
+        sum = (1.0 / pm_i.rest_density) * addend;
         
     }
     double sum_norm = sum.norm();
@@ -606,10 +624,10 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
 
-        if (dist < thickness) {
+        if (dist < 6*thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
-            Vector3D corrected = neighbor->predict_position + (thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (6*thickness)*neighborToPm;
             assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
             assert(check_vector(correction));
