@@ -57,7 +57,7 @@ Cloth::~Cloth() {
 void Cloth::buildGrid() {
     // TODO (Part 1): Build a grid of masses.
     // Make all the point masses
-    double density = 4000;
+    double density = 8000;
     density *= density;
     double start_left = 0;
     double start_right = 0;
@@ -118,7 +118,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     string filename = "simulate_data_" + to_string(num_width_points) + ".txt";
     outputFile.open(filename, fstream::app);
     
-    double density = 4000;
+    double density = 8000;
     density *= (cp->damping + .00001);
 
     // outputFile << "Iteration\n";
@@ -220,11 +220,11 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
         // Update vorticity
-//        Vector3D force_vort = force_vorticity_i(pm);
-//        //std::cout << "Vorticity = " << force_vort << "\n";
-//        pm.velocity += (force_vort / mass) * delta_t;
-//
-//        assert(check_vector(pm.velocity));
+        Vector3D force_vort = force_vorticity_i(pm);
+        //std::cout << "Vorticity = " << force_vort << "\n";
+        pm.velocity += (force_vort / mass) * delta_t;
+
+        assert(check_vector(pm.velocity));
 
         // Update viscosity (happens in place)
 //        viscosity_constraint(pm);
@@ -454,7 +454,7 @@ double Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
                 assert(check_vector(neighborToPm));
                 Vector3D addend = Vector3D();
                 double r = neighborToPm.norm();
-                if (r <= h) {
+                if (0 < r && r <= h) {
                     neighborToPm.normalize();
                     addend = (-90.0 / (M_PI * pow(h, 6))) * pow(h-r, 2) * neighborToPm;
                 }
@@ -508,6 +508,8 @@ void Cloth::lambda_i(PointMass &pm) {
         }
         double grad_Ci_pk_norm = delta_constraint_pk(pm, *neighbor);
 
+//        std::cout << "grad_Ci_pk_norm = " << grad_Ci_pk_norm << "\n";
+
         assert(!(isinf(grad_Ci_pk_norm)));
         assert(!isnan(grad_Ci_pk_norm));
         denom += pow(grad_Ci_pk_norm, 2);
@@ -534,7 +536,15 @@ Vector3D Cloth::vorticity_wi(PointMass &pm_i) {
         } else {
             Vector3D neighborToPm = (pm_i.predict_position - neighbor->predict_position);
             assert(check_vector(neighborToPm));
-            w_i += cross((neighbor->velocity - pm_i.velocity), (spiky_kernel_grad(neighborToPm, h)));
+
+            Vector3D addend = Vector3D();
+            double r = neighborToPm.norm();
+            if (0 < r && r <= h) {
+                neighborToPm.normalize();
+                addend = (90.0 / (M_PI * pow(h, 6))) * pow(h-r, 2) * neighborToPm;
+            }
+
+            w_i += cross((neighbor->velocity - pm_i.velocity), addend);
         }
     }
 
@@ -626,10 +636,10 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
 
-        if (dist < 6*thickness) {
+        if (dist < thickness) {
             assert(check_vector(neighbor->predict_position));
             assert(!isnan(thickness));
-            Vector3D corrected = neighbor->predict_position + (6*thickness)*neighborToPm;
+            Vector3D corrected = neighbor->predict_position + (thickness)*neighborToPm;
             assert(check_vector(corrected));
             Vector3D correction = corrected - pm.predict_position;
             assert(check_vector(correction));

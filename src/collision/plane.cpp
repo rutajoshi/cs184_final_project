@@ -110,6 +110,8 @@ void Plane::render(GLShader &shader) {
   }
   shader.uploadAttrib("is_vertex", vert);
   shader.uploadAttrib("height", h);
+  shader.uploadAttrib("xpos", h);
+  shader.uploadAttrib("zpos", h);
 
   if (shader.uniform("u_color", false) != -1) {
     shader.setUniform("u_color", color);

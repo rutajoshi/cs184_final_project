@@ -335,6 +335,8 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
   MatrixXf positions(4, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
   MatrixXf vert(1, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
   MatrixXf start_heights(1, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
+  MatrixXf xs(1, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
+  MatrixXf zs(1, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
   // MatrixXf normals(4, num_springs * 2);
 
   int si = 0;
@@ -346,6 +348,8 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
     positions.col(si) << pos.x, pos.y, pos.z, 1.0;
     vert.col(si) << 1.0;
     start_heights.col(si) << pm.position.y;
+    xs.col(si) << pm.position.x;
+    zs.col(si) << pm.position.z;
     si += 1;
   }
 
@@ -379,6 +383,8 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
   shader.uploadAttrib("in_position", positions, false);
   shader.uploadAttrib("is_vertex", vert, false);
   shader.uploadAttrib("height", start_heights, false);
+  shader.uploadAttrib("xpos", xs, false);
+  shader.uploadAttrib("zpos", zs, false);
   // Commented out: the wireframe shader does not have this attribute
   //shader.uploadAttrib("in_normal", normals);
 
