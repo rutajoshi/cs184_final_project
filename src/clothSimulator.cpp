@@ -895,4 +895,5 @@ void ClothSimulator::initGUI(Screen *screen) {
   //   fb->setSpinnable(true);
   //   fb->setCallback([this](float value) { this->m_height_scaling = value; });
   // }
+  // cloth->reset();
 }

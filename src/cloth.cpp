@@ -57,6 +57,8 @@ Cloth::~Cloth() {
 void Cloth::buildGrid() {
     // TODO (Part 1): Build a grid of masses.
     // Make all the point masses
+    double density = 4000;
+    density *= density;
     double start_left = 0;
     double start_right = 0;
     double start_bottom = 0;
@@ -102,6 +104,7 @@ void Cloth::buildGrid() {
                 pm.mass = 1; //width * height * depth * 1000 / num_width_points / num_height_points / num_depth_points;
                 pm.forces = Vector3D(0, -9.8, 0) * pm.mass;
                 point_masses.push_back(pm);
+                pm.rest_density = density;
             }
         }
     }
@@ -114,9 +117,13 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     ofstream outputFile;
     string filename = "simulate_data_" + to_string(num_width_points) + ".txt";
     outputFile.open(filename, fstream::app);
+    
+    double density = 4000;
+    density *= (cp->damping + .00001);
 
-    outputFile << "Iteration\n";
+    // outputFile << "Iteration\n";
     for (PointMass &pm : point_masses) {
+        pm.rest_density = density;
         outputFile << pm.position << "\n";
     }
     outputFile << "\n\n";
@@ -224,9 +231,9 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 //        assert(check_vector(pm.velocity));
 
         // Update position
-        assert(pm.position.y > -0.15);
+        // assert(pm.position.y > -0.15);
         pm.position = pm.predict_position;
-        assert(pm.position.y > -0.15);
+        // assert(pm.position.y > -0.15);
         assert(check_vector(pm.position));
     }
 
@@ -252,9 +259,6 @@ vector<PointMass *> *Cloth::get_neighbors(PointMass &pm) {
                 auto getter = map.find(nearby_hash);
                 if (getter != map.end()) {
                     vector<PointMass *> *nearby_neighbors = getter->second;
-//                    neighbors->insert(end(*neighbors), begin(*nearby_neighbors), end(*nearby_neighbors));
-
-//                    std::cout << "neaby pos = " << nearby_pos << "\n";
 
                     for (PointMass *neighbor : *nearby_neighbors) {
                         // furthest away you can be if you are a neighbor in a hash box diagonal from the primary box
@@ -348,8 +352,6 @@ Vector3D Cloth::calculate_delta_p(PointMass &pm_i) {
         // Tensile instability calculations
         double s_corr_numer = spiky_kernel(neighborToPm, h);
         double s_corr = -k * pow(s_corr_numer / s_corr_denom, n);
-
-//        std::cout << "s_corr = " << s_corr << "\n";
 
         delta_p += (pm_i.lambda + neighbor->lambda + s_corr) * p_spiky_grad;
     }
@@ -515,7 +517,7 @@ void Cloth::lambda_i(PointMass &pm) {
     assert(!isnan(denom) && !(isinf(denom)));
 
     double lambda = -1.0 * C_i / denom;
-
+// 
 //    cout << "lambda = " << lambda << "\n";
 
     pm.lambda = lambda;
