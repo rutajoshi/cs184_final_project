@@ -32,7 +32,7 @@
 
 
   "cloth": {
-    "damping": 0.2,
+    "damping": 0.5,
     "density": 150.0,
     "ks": 5000.0,
     "enable_structural": true,
@@ -42,9 +42,9 @@
     "width": 1,
     "height": 1,
     "depth": 1,
-    "num_width_points": 5,
-    "num_height_points": 5,
-    "num_depth_points": 5,
+    "num_width_points": 13,
+    "num_height_points": 13,
+    "num_depth_points": 13,
     "thickness": 0.0095
   }
 }

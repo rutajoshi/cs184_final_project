@@ -297,7 +297,8 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
 
       auto it_damping = object.find("damping");
       if (it_damping != object.end()) {
-        damping = *it_damping;
+//        damping = *it_damping;
+        damping = 0.5;
       } else {
         incompleteObjectError("cloth", "damping");
       }
