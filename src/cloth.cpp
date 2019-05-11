@@ -193,6 +193,21 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         // once positions are updated, check for collisions
 
+//        // self collisions
+//        for (PointMass &pm : point_masses) {
+//            assert(check_vector(pm.predict_position));
+//            self_collide(pm, simulation_steps);
+//            assert(check_vector(pm.predict_position));
+//        }
+
+        // collisions with planes
+        #pragma omp parallel for
+        for (PointMass &pm : point_masses) {
+            for (CollisionObject* c : *collision_objects){
+                c->collide(pm);
+            }
+        }
+
         // self collisions
         for (PointMass &pm : point_masses) {
             assert(check_vector(pm.predict_position));
@@ -200,11 +215,24 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
             assert(check_vector(pm.predict_position));
         }
 
-        // collisions with planes
-        #pragma omp parallel for
+        // contain within the bounds of the box
         for (PointMass &pm : point_masses) {
-            for (CollisionObject* c : *collision_objects){
-                c->collide(pm);
+            if (pm.predict_position.x < -0.1) {
+                pm.predict_position.x = -0.1 + 0.01;
+            } else if (pm.predict_position.x > 1.3) {
+                pm.predict_position.x = 1.3 - 0.01;
+            }
+
+            if (pm.predict_position.y < -0.2) {
+                pm.predict_position.y = -0.2 + 0.01;
+            } else if (pm.predict_position.y > 1.2) {
+                pm.predict_position.y = 1.2 - 0.01;
+            }
+
+            if (pm.predict_position.z < -0.2) {
+                pm.predict_position.z = -0.2 + 0.01;
+            } else if (pm.predict_position.z > 1.2) {
+                pm.predict_position.z = 1.2 - 0.01;
             }
         }
     }
@@ -369,9 +397,6 @@ double Cloth::kernel_poly6(Vector3D pos_dif, double h) {
         double mult = pow((pow(h,2) - pow(r,2)), 3);
         return 315. / (64. * M_PI * pow(h,9)) * mult;
     }
-//    if (r > h) {
-//        std::cout << "\n kernel_poly6 r= " << r<<" h = " <<h<<"\n";
-//    }
     assert(r > h);
     return 0;
 }

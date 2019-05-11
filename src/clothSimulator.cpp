@@ -168,7 +168,7 @@ ClothSimulator::ClothSimulator(std::string project_root, Screen *screen)
   this->load_shaders();
   // this->load_textures();
 
-  glPointSize(10);
+  glPointSize(20);
   glEnable(GL_MULTISAMPLE);
   glEnable( GL_BLEND );
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
