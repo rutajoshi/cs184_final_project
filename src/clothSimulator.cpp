@@ -342,42 +342,16 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
   int si = 0;
 
   // Draw points as points
-  for (int i = 0; i < cloth->point_masses.size(); i++) {
-    PointMass pm = cloth->point_masses[i];
-    Vector3D pos = pm.position;
-    positions.col(si) << pos.x, pos.y, pos.z, 1.0;
-    vert.col(si) << 1.0;
-    start_heights.col(si) << pm.position.y;
-    xs.col(si) << pm.position.x;
-    zs.col(si) << pm.position.z;
-    si += 1;
-  }
-
-  // Draw springs as lines
-
-  // for (int i = 0; i < cloth->springs.size(); i++) {
-  //   Spring s = cloth->springs[i];
-  //
-  //   if ((s.spring_type == STRUCTURAL && !cp->enable_structural_constraints) ||
-  //       (s.spring_type == SHEARING && !cp->enable_shearing_constraints) ||
-  //       (s.spring_type == BENDING && !cp->enable_bending_constraints)) {
-  //     continue;
-  //   }
-  //
-  //   Vector3D pa = s.pm_a->position;
-  //   Vector3D pb = s.pm_b->position;
-  //
-  //   Vector3D na = s.pm_a->normal();
-  //   Vector3D nb = s.pm_b->normal();
-  //
-  //   positions.col(si) << pa.x, pa.y, pa.z, 1.0;
-  //   positions.col(si + 1) << pb.x, pb.y, pb.z, 1.0;
-  //
-  //   normals.col(si) << na.x, na.y, na.z, 0.0;
-  //   normals.col(si + 1) << nb.x, nb.y, nb.z, 0.0;
-  //
-  //   si += 2;
-  // }
+//  for (int i = 0; i < cloth->point_masses.size(); i++) {
+//    PointMass pm = cloth->point_masses[i];
+//    Vector3D pos = pm.position;
+//    positions.col(si) << pos.x, pos.y, pos.z, 1.0;
+//    vert.col(si) << 1.0;
+//    start_heights.col(si) << pm.position.y;
+//    xs.col(si) << pm.position.x;
+//    zs.col(si) << pm.position.z;
+//    si += 1;
+//  }
 
   //shader.setUniform("u_color", nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f), false);
   shader.uploadAttrib("in_position", positions, false);
@@ -390,7 +364,28 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
 
   // shader.drawArray(GL_LINES, 0, num_springs * 2);
   // glDisable(GL_PROGRAM_POINT_SIZE);
-  shader.drawArray(GL_POINTS, 0, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
+//  shader.drawArray(GL_POINTS, 0, cloth->num_width_points * cloth->num_height_points * cloth->num_depth_points);
+
+
+  // Draw each point as a sphere
+  double radius = 0.05;
+  double friction = 0.3;
+  int sphere_num_lat = 40;
+  int sphere_num_lon = 40;
+  for (int i = 0; i < cloth->point_masses.size(); i++) {
+      PointMass pm = cloth->point_masses[i];
+      Vector3D pos = pm.position;
+      positions.col(si) << pos.x, pos.y, pos.z, 1.0;
+      vert.col(si) << 1.0;
+      start_heights.col(si) << pm.position.y;
+      xs.col(si) << pm.position.x;
+      zs.col(si) << pm.position.z;
+      si += 1;
+      Sphere *s = new Sphere(pos, radius, friction, sphere_num_lat, sphere_num_lon);
+      s->render(shader);
+  }
+
+
 
 #ifdef LEAK_PATCH_ON
   shader.freeAttrib("in_position");
