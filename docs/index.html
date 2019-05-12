@@ -30,6 +30,7 @@
 
 <br><br>
 
+<!-- TODO standardize all equations with LaTeX -->
 <div align="middle">
   <!-- TODO show video here -->
   <figcaption align="middle">Video</figcaption>
@@ -56,72 +57,13 @@
   density of the fluid in realtime while the simulation is rendering.
 </p>
 
-<br>
+<br><br>
 
 <h2>Technical Approach</h2>
 
-<h3>Modifying Project 4 Starter Code for Fluids</h3>
-<!-- TODO how we modified project 4 for our simulation-->
-<!-- TODO include picture -->
-<p>
-    We began by modifying code from
-    <a href="https://cal-cs184-student.github.io/p4-clothsim-rutajoshi/">Project 4: Cloth Simulation</a>.
-    This involved building a 3-dimensional grid of point masses rather than a
-    2-dimensional grid in which the point masses were connected by springs. We
-    removed spring constraints and then changed the simulation loop to the
-    position update loop given in Macklin's paper. We made some key changes to the
-    paper's simulation loop, including re-ordering some of the inner loops for
-    self-collision checking. Our updated version of the loop is below:
-
-    <br><br>
-
-    We also modified the cloth simulation code to render the point masses as OpenGL points of fixed radius. Later, we experimented
-    with rendering them as spheres, using the sphere collision object from Project 4. We found that particle simulation alone
-    was much faster, since rendering spheres with any type of shading took much more computation time.
-
-</p>
-
-<h3>Modifying Project 4 Starter Code for Remote Training</h3>
-<!-- TODO how we modified project 4 for training on Hive machines-->
-<!-- TODO include picture -->
-<p>
-  To improve the quality of our simulation, we had to render with more particles.
-  However, increasing the number of particles severely decreased the speed of
-  the simulation. To remedy this, we decided to outsource the computations
-  of position updates to the hive machines by writing each position change to
-  a file and removing the rendering functionality. At the start of each call to
-  the simulate loop, we wrote the current position of the particle to a
-  text file. After writing multiple files on the hive machines overnight, we
-  read them back in a new simulate loop which updates particle positions by
-  iterating through the lines in one of these text files.
-</p>
-
-<h3>Modeling Particles and Interactions with Planes</h3>
-<!-- TODO plane and self collisions-->
-<!-- generalized plane collision for any orientation -->
-<p>
-    We modeled plane collisions almost the same way we had modeled collisions
-    for a cloth with a plane: when a point mass had a new predicted position
-    which was within or on the other side of a plane as compared to the
-    previous position, we moved the point mass to the correct side of the
-    plane and maintained a small offset from the plane.
-
-    To model self-collisions, we used the thickness of the cloth which was
-    included in the original cloth simulation as a guideline for the minimum
-    distance we enforced between particles. Whenever a point mass became less than a given
-    thickness away from one of its neighbors, we displaced it in the direction
-    away from the neighbor. After iterating through all the neighbors of the
-    point mass, we applied a correction equal to the average of the corrections needed
-    for the point mass to maintain its distance from each of the neighbors.
-</p>
-<!-- TODO include picture -->
-
-
-
-<h3>Fluid Simulation Loop: Technical Implementation</h3>
+<h3>Fluid Simulation Loop</h3>
 <!-- [done above] TODO show + explain pseudocode for Macklin and Muller loop, include main equations-->
 <!-- TODO explain kernels-->
-<!-- TODO group into main components of a fluid (as ordered by the paper or by pressure, vorticity, and viscosity)-->
 
 <!-- TODO include picture -->
 <p>
@@ -181,19 +123,126 @@
   We will now walk through each part of the loop.
 </p>
 
+<h4>External Forces</h4>
+<!-- TODO external forcs -->
+<p>
+  We added external forces (e.g. gravity) first.
+</p>
+
 <h4>Finding Neighbors</h4>
 <!-- TODO hashing + neighbors -->
 <p>
+  We divided our unit cube into an SxSxS grid, grouping our particles in a 3D space.
 </p>
 
 <h4>Pressure</h4>
-<!-- TODO pressure - incrompessibility, tensile instability, discuss clumping / show video + picture -->
+<!-- TODO pressure - incompressibility, tensile instability, discuss clumping / show video + picture -->
 <p>
+  We want to enforce imcompressibility on the fluid, in which we maintain a
+  constant density through the fluid. To do this, we take each particle, and move it
+  to maintain a constant density relative to its neighbors. We are solving for the
+  following constraint, in which <b>p_i</b> is the density of the particle, and <b>p_o</b> is
+  the rest density of the fluid:
+
+  <br>
+  <img src="final_images/pressure/pressure_constraint.png" width="200px"/>
+  <br>
+
+  To estimate the mass density of a particle, we use the following equation, where
+  <b>W</b> is the poly6 kernel:
+
+  <br>
+  <img src="final_images/pressure/mass_density.png" width="200px"/>
+  <br>
+
+  Given this, when we move a particle by <b>delta_p</b>, the density constraint
+  should still be valid. In other words:
+
+  <br>
+  <img src="final_images/pressure/pressure_solver.png" width="200px"/>
+  <br>
+
+  We can solve for this constraint by applying Newton steps along a gradient:
+
+  <br>
+  <img src="final_images/pressure/pressure_newton_step.png" width="200px"/>
+  <br>
+
+  For this, we need to know the gradient of this constraint. We define this gradient
+  as:
+
+  <br>
+  <img src="final_images/pressure/constraint_gradient.png" width="200px"/>
+  <br>
+
+  With this, we need to assign a weight to the gradient, which defines how
+  far we travel along our gradient. We do this differently for each particle,
+  so we assign a variable <b>lambda_i</b> as a weight for the gradient for a particle
+  <b>i</b>:
+
+  <br>
+  <img src="final_images/pressure/lambda_i.png" width="200px"/>
+  <br>
+
+  Plugging lambda and the gradient into our constraint, and we get the following
+  equation for our pressure update to a particle:
+
+  <br>
+  <img src="final_images/pressure/pressure_update.png" width="200px"/>
+  <br>
+
+  However, this pressure update often results in clumping of particles, due to
+  too much pressure for each particle compounding on each other. To account for
+  this, we add a factor <b>s_corr</b> to artifically introduce tensile instability
+  into the pressure update:
+
+  <br>
+  <img src="final_images/pressure/s_corr.png" width="200px"/>
+  <br>
+
+  With this factor added in, our final pressure update becomes:
+
+  <br>
+  <img src="final_images/pressure/pressure_update_s_corr.png" width="200px"/>
+  <br>
 </p>
 
 <h4>Vorticity</h4>
 <!-- TODO vorticity - implemented a different version of eta from Bubbles Alive -->
 <p>
+  Vorticity accounts for turbulent motion, causing sloshing and
+  circular movements within a fluid. We calculate the vorticity of a particle
+  using the following estimator, where <b>v_ij = v_j - v_i</b>:
+
+  <br>
+  <img src="final_images/vorticity/w_i.png" width="200px"/>
+  <br>
+
+  <!-- TODO what is a location vector -->
+  Additionally, we need a location vector, which is a vector pointing towards
+  the center of the circular motion. We calculate the center of mass of a point mass
+  and its neighbors:
+
+  <br>
+  <img src="final_images/vorticity/center_of_mass.png" width="200px"/>
+  <br>
+
+  We use this to calculate a location vector <b>eta</b>, which we normalize:
+
+  <br>
+  <img src="final_images/vorticity/eta.png" width="200px"/>
+  <br>
+
+  <br>
+  <img src="final_images/vorticity/eta_normalized.png" width="200px"/>
+  <br>
+
+  We then use the location vector <b>eta</b> with a vorticity <b>w_i</b> to
+  calculate a vorticity force:
+
+  <br>
+  <img src="final_images/vorticity/f_vorticity_i.png" width="200px"/>
+  <br>
 </p>
 
 <h4>Viscosity</h4>
@@ -208,12 +257,72 @@
 
 </p>
 
+<br><br>
+
+<h3>Modifying Project 4 Starter Code for Fluids</h3>
+<!-- TODO how we modified project 4 for our simulation-->
+<!-- TODO include picture -->
+<p>
+    We began by modifying code from
+    <a href="https://cal-cs184-student.github.io/p4-clothsim-rutajoshi/">Project 4: Cloth Simulation</a>.
+    This involved building a 3-dimensional grid of point masses rather than a
+    2-dimensional grid in which the point masses were connected by springs. We
+    removed spring constraints and then changed the simulation loop to the
+    position update loop given in Macklin's paper. We made some key changes to the
+    paper's simulation loop, including re-ordering some of the inner loops for
+    self-collision checking. Our updated version of the loop is below:
+
+    <br><br>
+
+    We also modified the cloth simulation code to render the point masses as OpenGL points of fixed radius. Later, we experimented
+    with rendering them as spheres, using the sphere collision object from Project 4. We found that particle simulation alone
+    was much faster, since rendering spheres with any type of shading took much more computation time.
+
+</p>
+
+<h3>Modifying Project 4 Starter Code for Remote Training</h3>
+<!-- TODO how we modified project 4 for training on Hive machines-->
+<!-- TODO include picture -->
+<p>
+  To improve the quality of our simulation, we had to render with more particles.
+  However, increasing the number of particles severely decreased the speed of
+  the simulation. To remedy this, we decided to outsource the computations
+  of position updates to the hive machines by writing each position change to
+  a file and removing the rendering functionality. At the start of each call to
+  the simulate loop, we wrote the current position of the particle to a
+  text file. After writing multiple files on the hive machines overnight, we
+  read them back in a new simulate loop which updates particle positions by
+  iterating through the lines in one of these text files.
+</p>
+
+<h3>Modeling Particles and Interactions with Planes</h3>
+<!-- TODO plane and self collisions-->
+<!-- generalized plane collision for any orientation -->
+<p>
+    We modeled plane collisions almost the same way we had modeled collisions
+    for a cloth with a plane: when a point mass had a new predicted position
+    which was within or on the other side of a plane as compared to the
+    previous position, we moved the point mass to the correct side of the
+    plane and maintained a small offset from the plane.
+
+    To model self-collisions, we used the thickness of the cloth which was
+    included in the original cloth simulation as a guideline for the minimum
+    distance we enforced between particles. Whenever a point mass became less than a given
+    thickness away from one of its neighbors, we displaced it in the direction
+    away from the neighbor. After iterating through all the neighbors of the
+    point mass, we applied a correction equal to the average of the corrections needed
+    for the point mass to maintain its distance from each of the neighbors.
+</p>
+<!-- TODO include picture -->
+
 <h2>Results</h2>
 <!-- TODO add lots of images -->
 <!-- one video for water, one video/gif for lava (change shader, one video for changing density in real time -->
 <p>
 
 </p>
+
+<br><br>
 
 <h2>References</h2>
 <!-- TODO add Macklin + Muller, cheat sheet for kernels, Bubbles Alive -->
@@ -244,6 +353,8 @@
 <p>
 
 </p>
+
+<br><br>
 
 <h2>Contributions</h2>
 <!-- TODO contributions from each team member -->
