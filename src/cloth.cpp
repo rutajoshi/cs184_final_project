@@ -193,12 +193,12 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         // once positions are updated, check for collisions
 
-//        // self collisions
-//        for (PointMass &pm : point_masses) {
-//            assert(check_vector(pm.predict_position));
-//            self_collide(pm, simulation_steps);
-//            assert(check_vector(pm.predict_position));
-//        }
+        // self collisions
+        for (PointMass &pm : point_masses) {
+            assert(check_vector(pm.predict_position));
+            self_collide(pm, simulation_steps);
+            assert(check_vector(pm.predict_position));
+        }
 
         // collisions with planes
         #pragma omp parallel for
@@ -206,13 +206,6 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
             for (CollisionObject* c : *collision_objects){
                 c->collide(pm);
             }
-        }
-
-        // self collisions
-        for (PointMass &pm : point_masses) {
-            assert(check_vector(pm.predict_position));
-            self_collide(pm, simulation_steps);
-            assert(check_vector(pm.predict_position));
         }
 
         // contain within the bounds of the box
@@ -255,8 +248,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         assert(check_vector(pm.velocity));
 
         // Update viscosity (happens in place)
-//        viscosity_constraint(pm);
-//        assert(check_vector(pm.velocity));
+        viscosity_constraint(pm);
+        assert(check_vector(pm.velocity));
 
         // Update position
         // assert(pm.position.y > -0.15);
