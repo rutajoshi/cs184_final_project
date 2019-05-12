@@ -40,13 +40,19 @@
 <h2>Abstract</h2>
 <p>
   <!-- TODO abstract content -->
-  Fluid simulation is a task within physics-based simulation which is used in film and video games to create the visual
-  effect of water or other fluids. The density of a fluid, among other properties, affects how its particles interact in
-  3D space. We implemented Miles Macklin and Matthias Müller's paper - Position Based Fluids, to simulate water using
-  only position and velocity updates rather than updates to the forces acting on each particle. We retrofitted cloth
-  simulation code from Berkeley's CS 184 Project 4, changed the simulation loop to implement density and pressure based
-  updates, remodeled our code for remote training and fast simple local rendering, and created position based shaders to
-  render the particles more realistically. Finally, we added a density slider to the GUI so that a user can change the
+  <!-- TODO include link to Position Based Fluids paper -->
+  Fluid simulation is a task within physics-based simulation which is used in
+  film and video games to create the visual effect of water or other fluids.
+  The density of a fluid, among other properties, affects how its particles
+  interact in 3D space. We implemented Miles Macklin and Matthias Müller's
+  paper <b>Position Based Fluids<b>, which considers fluids as as a set of
+  particles that move at variable positions and velocities, subject to
+  constraints such as vorticity that control the movement of the fluid. We
+  retrofitted cloth simulation code from Berkeley's CS 184 Project 4, changed
+  the simulation loop to implement density and pressure based updates, remodeled
+  our code for remote training and fast simple local rendering, and created
+  position based shaders to render the particles more realistically. Finally, we
+  added a density slider to the GUI so that a user can change the
   density of the fluid in realtime while the simulation is rendering.
 </p>
 
@@ -56,12 +62,75 @@
 
 <h3>Modifying Project 4 Starter Code for Fluids</h3>
 <!-- TODO how we modified project 4 for our simulation-->
-    We began by modifying code from <a href="https://cal-cs184-student.github.io/p4-clothsim-rutajoshi/">Project 4: Cloth Simulation</a>.
-    This involved building a 3-dimensional grid of point masses rather than a 2-dimensional grid in which the point masses were connected
-    by springs. We removed spring constraints and then changed the simulation loop to the position update loop given in Macklin's paper,
-    with some key changes, re-orderings, and additions, such as self-collision checking. Our updated version of the loop is below:
+<!-- TODO include picture -->
+<p>
+    We began by modifying code from
+    <a href="https://cal-cs184-student.github.io/p4-clothsim-rutajoshi/">Project 4: Cloth Simulation</a>.
+    This involved building a 3-dimensional grid of point masses rather than a
+    2-dimensional grid in which the point masses were connected by springs. We
+    removed spring constraints and then changed the simulation loop to the
+    position update loop given in Macklin's paper. We made some key changes to the
+    paper's simulation loop, including re-ordering some of the inner loops for
+    self-collision checking. Our updated version of the loop is below:
 
-    <pre class="prettyprint">
+    <br><br>
+
+    We also modified the cloth simulation code to render the point masses as OpenGL points of fixed radius. Later, we experimented
+    with rendering them as spheres, using the sphere collision object from Project 4. We found that particle simulation alone
+    was much faster, since rendering spheres with any type of shading took much more computation time.
+
+</p>
+
+<h3>Modifying Project 4 Starter Code for Remote Training</h3>
+<!-- TODO how we modified project 4 for training on Hive machines-->
+<!-- TODO include picture -->
+<p>
+  To improve the quality of our simulation, we had to render with more particles.
+  However, increasing the number of particles severely decreased the speed of
+  the simulation. To remedy this, we decided to outsource the computations
+  of position updates to the hive machines by writing each position change to
+  a file and removing the rendering functionality. At the start of each call to
+  the simulate loop, we wrote the current position of the particle to a
+  text file. After writing multiple files on the hive machines overnight, we
+  read them back in a new simulate loop which updates particle positions by
+  iterating through the lines in one of these text files.
+</p>
+
+<h3>Modeling Particles and Interactions with Planes</h3>
+<!-- TODO plane and self collisions-->
+<!-- generalized plane collision for any orientation -->
+<p>
+    We modeled plane collisions almost the same way we had modeled collisions
+    for a cloth with a plane: when a point mass had a new predicted position
+    which was within or on the other side of a plane as compared to the
+    previous position, we moved the point mass to the correct side of the
+    plane and maintained a small offset from the plane.
+
+    To model self-collisions, we used the thickness of the cloth which was
+    included in the original cloth simulation as a guideline for the minimum
+    distance we enforced between particles. Whenever a point mass became less than a given
+    thickness away from one of its neighbors, we displaced it in the direction
+    away from the neighbor. After iterating through all the neighbors of the
+    point mass, we applied a correction equal to the average of the corrections needed
+    for the point mass to maintain its distance from each of the neighbors.
+</p>
+<!-- TODO include picture -->
+
+
+
+<h3>Fluid Simulation Loop: Technical Implementation</h3>
+<!-- [done above] TODO show + explain pseudocode for Macklin and Muller loop, include main equations-->
+<!-- TODO explain kernels-->
+<!-- TODO group into main components of a fluid (as ordered by the paper or by pressure, vorticity, and viscosity)-->
+
+<!-- TODO include picture -->
+<p>
+  This is the final simulation loop we implemented, inspired by Position Based
+  Fluids with a few modifications:
+
+  <br><br>
+
+  <pre class="prettyprint">
     for all particles i do
       apply forces v_i ⇐ v_i + ∆t(f_{external} / mass)
       predict position x*_i ⇐ x_i +∆t(v_i)
@@ -98,63 +167,38 @@
       apply vorticity confinement and XSPH viscosity as updates to v_i
       update position x_i ⇐ x*_i
     end for
-    </pre>
+  </pre>
 
-    We move collision checking to be done after the update to the predicted position because the collision updates modify
-    the predicted position directly rather than changing the delta that is calculated after the density and incompressibility
-    constraints are applied.
+  <br><br>
 
-    We also modified the cloth simulation code to render the point masses as OpenGL points of fixed radius. Later, we experimented
-    with rendering them as spheres, using the sphere collision object from Project 4. We found that particle simulation alone
-    was much faster, since rendering spheres with any type of shading took much more computation time.
+  We move collision checking to be done after the update to the predicted
+  position because the collision updates modify the predicted position directly
+  rather than changing the delta that is calculated after the density and incompressibility
+  constraints are applied.
 
-<!-- TODO include picture -->
-<p>
+  <br><br>
 
+  We will now walk through each part of the loop.
 </p>
 
-<h3>Modifying Project 4 Starter Code for Remote Training</h3>
-<!-- TODO how we modified project 4 for training on Hive machines-->
-    To improve the quality of our simulation, we had to render with more particles. However, increasing the number of
-    particles severely decreased the speed of the simulation. To remedy this, we decided to outsource the computations
-    of position updates to the hive machines by writing each position change to a file and removing the rendering
-    functionality. At the start of each call to the simulate loop, we wrote the current position of the particle to a
-    text file. After writing multiple files on the hive machines overnight, we read them back in a new simulate loop
-    which updates particle positions by iterating through the lines in one of these text files.
-
-<!-- TODO include picture -->
+<h4>Finding Neighbors</h4>
+<!-- TODO hashing + neighbors -->
 <p>
-
 </p>
 
-<h3>Modeling Particles and Interactions with Planes</h3>
-<!-- TODO plane and self collisions-->
-<p>
-    We modeled plane collisions almost the same way we had modeled collisions for a cloth with a plane: when a point mass
-    had a new predicted position which was within or on the other side of a plane as compared to the previous position,
-    we moved the point mass to the correct side of the plane and maintained a small offset from the plane.
-
-    To model self-collisions, we used the thickness of the cloth which was included in the original cloth simulation as
-    a guideline for the minimum distance we enforced between particles. Whenever a point mass became less than a given
-    thickness away from one of its neighbors, we displaced it in the direction away from the neighbor. After iterating
-    through all the neighbors of the point mass, we applied a correction equal to the average of the corrections needed
-    for the point mass to maintain its distance from each of the neighbors.
-</p>
-<!-- TODO include picture -->
-
-
-
-<h3>Fluid Simulation Loop: Technical Implementation</h3>
-<!-- [done above] TODO show + explain pseudocode for Macklin and Muller loop, include main equations-->
-<!-- TODO explain kernels-->
-
-<!-- TODO group into main components of a fluid (as ordered by the paper or by pressure, vorticity, and viscosity)-->
+<h4>Pressure</h4>
 <!-- TODO pressure - incrompessibility, tensile instability, discuss clumping / show video + picture -->
-<!-- TODO vorticity - implemented a different version of eta from Bubbles Alive -->
-<!-- TODO viscosity -->
-<!-- TODO include picture -->
 <p>
+</p>
 
+<h4>Vorticity</h4>
+<!-- TODO vorticity - implemented a different version of eta from Bubbles Alive -->
+<p>
+</p>
+
+<h4>Viscosity</h4>
+<!-- TODO viscosity -->
+<p>
 </p>
 
 <h3>Density Slider</h3>
@@ -173,7 +217,7 @@
 
 <h2>References</h2>
 <!-- TODO add Macklin + Muller, cheat sheet for kernels, Bubbles Alive -->
-<!-- someone verify these are correct links, copied from project checkpoint
+<!-- TODO someone verify these are correct links, copied from project checkpoint
 <ul>
   <li>
     <a href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
