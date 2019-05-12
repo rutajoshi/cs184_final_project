@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Final Project Checkpoint </title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
+<h1 align="middle">Final Project Checkpoint: Fluid Simulation with Varying Density</h1>
+<h2 align="middle">Team: Ruta Joshi (26122656), Jacqueline Forsberg (26814270), Eric D’Sa (26127496)</h2>
+
+<br><br>
+
+<div align="middle">
+  <img src="images/scene_images/b.png" align="middle" width="500px"/>
+  <figcaption align="middle">Initializing water particles in box above a plane</figcaption>
+</div>
+
+<br><br>
+
+<h3>Summary</h3>
+<p>
+  Our group is working on a fluid simulation with a density control to adjust the density of
+  the fluid. Such a simulation would be useful for testing the effects of viscosity and vorticity
+  on fluids of different densities.
+</p>
+
+<br>
+
+<h3>What We Have Accomplished</h3>
+<p>
+  We adapted our cloth simulation code from CS 184 Project 4 to create a starting point for our fluid
+  simulation. Cloths and fluids differ in multiple ways, so we made the following changes:
+</p>
+<ul>
+  <li>
+    Our cloth object is no longer a cloth. We create point masses in a 3D grid format, but we do not
+    create any springs, or any other connections between point masses. A cloth has particles that stick
+    together due to the springs that constrain their motion. In a fluid, the bonds between particles
+    are far less rigid, so it is more effective to model them with particle physics instead of springs.
+    We follow the approach of Macklin and Muller (Position Based Fluids, 2013).
+  </li>
+  <li>
+    In going from a 2-dimensional grid to a 3-dimensional system of point masses in a unit cube, we had
+    to change the spatial hashing function used to find the neighbors of a point mass. We added a depth
+    and num_depth_points to the Cloth object from part 4, which is what we have retrofitted to act as a fluid,
+    and we now split up the space into rectangular prisms (rather than squares over a fixed z value).
+  </li>
+  <li>
+    We needed to create a box for our fluid to live in and fall into. To do this, we added planes to a json
+    file with varying orientations and positions and implemented plane collisions.
+  </li>
+  <li>
+    We kept track of normal forces from plane collisions and applied a damping factor to model the collision
+    of particles with a plane. We used conservation of momentum to model an inelastic collision using classical
+    mechanics.
+  </li>
+  <li>
+    We changed our rendering for point masses and planes. Our point masses are displayed as round blue spheres,
+    and our planes are red squares. We do this using GLSL's shader capabilities.
+  </li>
+  <li>
+    We removed multiple shader controls, since we are focused on particle interactions and not on shading at
+    this time.
+  </li>
+  <li>
+    We added slider controls for density.
+  </li>
+</ul>
+<p>
+  After making these changes, we implemented the simulation loop in the following research paper
+  (https://mmacklin.com/pbf_sig_preprint.pdf). The mentioned simulation loop contains checks for
+  constraints on a fluid, including incompressibility, tensile instability, vorticity, and viscosity.
+</p>
+
+<br>
+
+<h3>Preliminary Results</h3>
+<p>
+  We have multiple point masses, moving independently of each other. Our simulation has rendering changes
+  to better display the movement of a fluid, as well as a density control for the fluid. We have implemented
+  our simulation loop; however, the position function of our point masses diverges after a few time steps,
+  which results in large point displacements.
+</p>
+<table style="width=100%">
+  <tr>
+    <td>
+      <img src="images/scene_images/c.png" width="500px"/>
+      <figcaption align="middle">Water Particles in Box without lid</figcaption>
+    </td>
+    <td>
+      <img src="images/scene_images/a.png" width="500px"/>
+      <figcaption align="middle">Water Particles enclosed in Box</figcaption>
+    </td>
+  </tr>
+</table>
+
+<br>
+
+<h3>Progress (Relative To Our Plan)</h3>
+<p>
+  We had three main goals in our plan. Our progress can be summarized as the following:
+</p>
+<ul>
+  <li>
+    <b>Fluid Simulation: </b> Core simulation loop for fluids is implemented.
+    This is mostly done, with some bugs.
+  </li>
+  <li>
+    <b>Density Control: </b> Our simulation included a density control. This
+    adjusts the density, but does not affect the movement of the fluid.
+  </li>
+  <li>
+    <b>Particle Colorization</b>: We have not attempted gradient colorization of particles based on the current height of
+    each particle. We currently have set the colors of particles based on their initial heights for debugging purposes.
+  </li>
+</ul>
+
+<h3><Updates to our Work Plan</h3>
+<p>We plan to finish implementing the Macklin and Muller paper and add the density and color gradient shading as originally
+planned.</p>
+
+<br>
+
+<h3>Video</h3>
+<a href="https://youtu.be/iR8GGnOnIyU">Youtube Link</a>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/iR8GGnOnIyU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<br>
+
+<h3>Slides</h3>
+<a href="https://docs.google.com/presentation/d/1JJjHRPM6KrUzaHP04bmqmrrMPoAjArs5ess472ruTGw/edit?usp=sharing">Slide Deck Link</a>
+
+<br>
+
+<h3>Links/Citations</h3>
+<ul>
+  <li>
+    <a href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
+    <p>
+      This is the core fluid simulation paper we referenced. We implementation the simulation loop>
+      and fluid constraints in this paper.
+    </p>
+  </li>
+  <li>
+    <a href="https://dl.acm.org/citation.cfm?id=1360647">https://dl.acm.org/citation.cfm?id=1360647</a>
+    <p>
+      We referenced this paper for assistance with implementing vorticity constraints. The paper "Position
+      Based Fluids" (above) referenced this paper in their vorticity constraint calculations.
+    </p>
+  </li>
+  <li>
+    <a href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf</a>
+    <p>
+      We used some of the kernels included in this link.
+    <p>
+  </li>
+</ul>
+
+</body>
+</html>
