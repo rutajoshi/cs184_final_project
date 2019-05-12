@@ -1,31 +1,31 @@
 {
   "bottom":{
-    "point":[0.5,-0.1,0.5],
+    "point":[0.5,-0.6,0.5],
     "normal":[0,1,0],
     "friction":0.5
   },
   "top":{
-    "point":[0.5,1.3,0.5],
+    "point":[0.5,1.8,0.5],
     "normal":[0,-1,0],
     "friction":0.5
   },
   "left":{
-    "point":[1.2,0.5,0.5],
+    "point":[1.6,0.5,0.5],
     "normal":[1,0,0],
     "friction":0.5
   },
   "right":{
-    "point":[-0.2,0.5,0.5],
+    "point":[-0.6,0.5,0.5],
     "normal":[-1,0,0],
     "friction":0.5
   },
   "back":{
-    "point":[0.5,0.5,1.2],
+    "point":[0.5,0.5,1.6],
     "normal":[0,0,-1],
     "friction":0.5
   },
   "front":{
-    "point":[0.5,0.5,-0.2],
+    "point":[0.5,0.5,-0.6],
     "normal":[0,0,1],
     "friction":0.5
   },
@@ -41,9 +41,9 @@
     "width": 1,
     "height": 1,
     "depth": 1,
-    "num_width_points": 10,
-    "num_height_points": 10,
-    "num_depth_points": 10,
-    "thickness": 0.095
+    "num_width_points": 8,
+    "num_height_points": 8,
+    "num_depth_points": 8,
+    "thickness": 0.0095
   }
 }

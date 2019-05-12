@@ -71,21 +71,21 @@ void Cloth::buildGrid() {
                 double rand_i = rand() % 2;
                 rand_i -= 1;
                 rand_i /= 2; //10;
-//                rand_i = 0;
+                rand_i = 0;
                 double x = start_left + (r + rand_i) * (unit_h);
                 x = max(0., x);
                 x = min(x, 1.);
                 rand_i = rand() % 2;
                 rand_i -= 1;
                 rand_i /= 2; //10;
-//                rand_i = 0;
+                rand_i = 0;
                 double y = start_right + (c + rand_i) * (unit_w);
                 y = max(0., y);
                 y = min(y, 1.);
                 rand_i = rand() % 2;
                 rand_i -= 1;
                 rand_i /= 2; //10;
-//                rand_i = 0;
+                rand_i = 0;
                 double z = start_bottom + (p + rand_i) * (unit_d);
                 z = max(0., z);
                 z = min(z, 1.);
@@ -186,7 +186,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             // Update predicted positions
-            pm.predict_position += pm.delta_position;
+//            pm.predict_position += pm.delta_position;
             // validity test the predicted positions
             assert(check_vector(pm.predict_position));
         }
@@ -209,25 +209,25 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         }
 
         // contain within the bounds of the box
-        for (PointMass &pm : point_masses) {
-            if (pm.predict_position.x < -0.1) {
-                pm.predict_position.x = -0.1 + 0.01;
-            } else if (pm.predict_position.x > 1.3) {
-                pm.predict_position.x = 1.3 - 0.01;
-            }
-
-            if (pm.predict_position.y < -0.2) {
-                pm.predict_position.y = -0.2 + 0.01;
-            } else if (pm.predict_position.y > 1.2) {
-                pm.predict_position.y = 1.2 - 0.01;
-            }
-
-            if (pm.predict_position.z < -0.2) {
-                pm.predict_position.z = -0.2 + 0.01;
-            } else if (pm.predict_position.z > 1.2) {
-                pm.predict_position.z = 1.2 - 0.01;
-            }
-        }
+//        for (PointMass &pm : point_masses) {
+//            if (pm.predict_position.x < -0.1) {
+//                pm.predict_position.x = -0.1 + 0.01;
+//            } else if (pm.predict_position.x > 1.3) {
+//                pm.predict_position.x = 1.3 - 0.01;
+//            }
+//
+//            if (pm.predict_position.y < -0.2) {
+//                pm.predict_position.y = -0.2 + 0.01;
+//            } else if (pm.predict_position.y > 1.2) {
+//                pm.predict_position.y = 1.2 - 0.01;
+//            }
+//
+//            if (pm.predict_position.z < -0.2) {
+//                pm.predict_position.z = -0.2 + 0.01;
+//            } else if (pm.predict_position.z > 1.2) {
+//                pm.predict_position.z = 1.2 - 0.01;
+//            }
+//        }
     }
 
     // update velocity, apply vorticity and viscosity constraints
@@ -241,15 +241,15 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
         // Update vorticity
-        Vector3D force_vort = force_vorticity_i(pm);
-        //std::cout << "Vorticity = " << force_vort << "\n";
-        pm.velocity += (force_vort / mass) * delta_t;
-
-        assert(check_vector(pm.velocity));
-
-        // Update viscosity (happens in place)
-        viscosity_constraint(pm);
-        assert(check_vector(pm.velocity));
+//        Vector3D force_vort = force_vorticity_i(pm);
+//        //std::cout << "Vorticity = " << force_vort << "\n";
+//        pm.velocity += (force_vort / mass) * delta_t;
+//
+//        assert(check_vector(pm.velocity));
+//
+//        // Update viscosity (happens in place)
+//        viscosity_constraint(pm);
+//        assert(check_vector(pm.velocity));
 
         // Update position
         // assert(pm.position.y > -0.15);
@@ -653,6 +653,9 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
 
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
+
+        thickness = 1.0 / pow(pm.rest_density, 1.0/3.0);
+//        cout << "thickness = " << thickness << "\n";
 
         if (dist < thickness) {
             assert(check_vector(neighbor->predict_position));
