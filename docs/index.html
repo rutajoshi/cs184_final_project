@@ -40,13 +40,13 @@
 
 <h2>Abstract</h2>
 <p>
-  <!-- TODO abstract content -->
   <!-- TODO include link to Position Based Fluids paper -->
   Fluid simulation is a task within physics-based simulation which is used in
   film and video games to create the visual effect of water or other fluids.
   The density of a fluid, among other properties, affects how its particles
   interact in 3D space. We implemented Miles Macklin and Matthias Müller's
-  paper <b>Position Based Fluids</b>, which considers fluids as as a set of
+  paper <a href="https://mmacklin.com/pbf_sig_preprint.pdf">Position Based Fluids</a>,
+  which considers fluids as as a set of
   particles that move at variable positions and velocities, subject to
   constraints such as vorticity that control the movement of the fluid. We
   retrofitted cloth simulation code from Berkeley's CS 184 Project 4, changed
@@ -126,7 +126,9 @@
 <h4>External Forces</h4>
 <!-- TODO external forcs -->
 <p>
-  We added external forces (e.g. gravity) first.
+  We added external forces (e.g. gravity) first. We take a force, and calculate
+  an acceleration from it. Then, we account for this acceleration in the
+  velocity and position of each point mass.
 </p>
 
 <h4>Finding Neighbors</h4>
@@ -135,10 +137,10 @@
   We divided our unit cube into an SxSxS grid, grouping our particles in a 3D space.
 </p>
 
-<h4>Pressure</h4>
+<h4>Incompressibility</h4>
 <!-- TODO pressure - incompressibility, tensile instability, discuss clumping / show video + picture -->
 <p>
-  We want to enforce imcompressibility on the fluid, in which we maintain a
+  We want to enforce incompressibility on the fluid, in which we maintain a
   constant density through the fluid. To do this, we take each particle, and move it
   to maintain a constant density relative to its neighbors. We are solving for the
   following constraint, in which <b>p_i</b> is the density of the particle, and <b>p_o</b> is
@@ -190,7 +192,10 @@
   <br>
   <img src="final_images/pressure/pressure_update.png" width="200px"/>
   <br>
+</p>
 
+<h4>Tensile Instability</h4>
+<p>
   However, this pressure update often results in clumping of particles, due to
   too much pressure for each particle compounding on each other. To account for
   this, we add a factor <b>s_corr</b> to artifically introduce tensile instability
@@ -260,10 +265,12 @@
 </p>
 
 <h3>Density Slider</h3>
-<!-- TODO we added a density slider, which changes in real time-->
 <!-- TODO include picture -->
 <p>
-
+  We wanted to see changes in a fluid density in real time. We added a density
+  slider similar to the sliders for Project 4 parameters. This slider adjusts
+  the density as the simulation is running, meaning a fluid can start in the simulation
+  like a liquid, and be modified to a gas immediately.
 </p>
 
 <br><br>
@@ -348,7 +355,7 @@ in real time -->
   <li>
     <a href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
     <p>
-      This is the core fluid simulation paper we referenced. We implementation the simulation loop>
+      This is the core fluid simulation paper we referenced. We implementation the simulation loop
       and fluid constraints in this paper.
     </p>
   </li>
