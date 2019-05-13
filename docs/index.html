@@ -248,6 +248,15 @@
 <h4>Viscosity</h4>
 <!-- TODO viscosity -->
 <p>
+  Viscosity defines how thick a fluid is. It also creates coherent motion within
+  the fluid; particles that are close together move together. Thus, we have to
+  adjust particles' velocities such that they are closer to the velocities
+  of particles around them. We accomplish this with the following velocity
+  update:
+
+  <br>
+  <img src="final_images/viscosity/viscosity_eq.png" width="200px"/>
+  <br>
 </p>
 
 <h3>Density Slider</h3>
@@ -263,21 +272,20 @@
 <!-- TODO how we modified project 4 for our simulation-->
 <!-- TODO include picture -->
 <p>
-    We began by modifying code from
-    <a href="https://cal-cs184-student.github.io/p4-clothsim-rutajoshi/">Project 4: Cloth Simulation</a>.
-    This involved building a 3-dimensional grid of point masses rather than a
-    2-dimensional grid in which the point masses were connected by springs. We
-    removed spring constraints and then changed the simulation loop to the
-    position update loop given in Macklin's paper. We made some key changes to the
-    paper's simulation loop, including re-ordering some of the inner loops for
-    self-collision checking. Our updated version of the loop is below:
+  We began by modifying code from
+  <a href="https://cal-cs184-student.github.io/p4-clothsim-rutajoshi/">Project 4: Cloth Simulation</a>.
+  This involved building a 3-dimensional grid of point masses rather than a
+  2-dimensional grid in which the point masses were connected by springs. We
+  removed spring constraints and then changed the simulation loop to the
+  position update loop given in Macklin's paper. We made some key changes to the
+  paper's simulation loop, including re-ordering some of the inner loops for
+  self-collision checking. Our updated version of the loop is below:
 
-    <br><br>
+  <br><br>
 
-    We also modified the cloth simulation code to render the point masses as OpenGL points of fixed radius. Later, we experimented
-    with rendering them as spheres, using the sphere collision object from Project 4. We found that particle simulation alone
-    was much faster, since rendering spheres with any type of shading took much more computation time.
-
+  We also modified the cloth simulation code to render the point masses as OpenGL points of fixed radius. Later, we experimented
+  with rendering them as spheres, using the sphere collision object from Project 4. We found that particle simulation alone
+  was much faster, since rendering spheres with any type of shading took much more computation time.
 </p>
 
 <h3>Modifying Project 4 Starter Code for Remote Training</h3>
@@ -299,19 +307,19 @@
 <!-- TODO plane and self collisions-->
 <!-- generalized plane collision for any orientation -->
 <p>
-    We modeled plane collisions almost the same way we had modeled collisions
-    for a cloth with a plane: when a point mass had a new predicted position
-    which was within or on the other side of a plane as compared to the
-    previous position, we moved the point mass to the correct side of the
-    plane and maintained a small offset from the plane.
+  We modeled plane collisions almost the same way we had modeled collisions
+  for a cloth with a plane: when a point mass had a new predicted position
+  which was within or on the other side of a plane as compared to the
+  previous position, we moved the point mass to the correct side of the
+  plane and maintained a small offset from the plane.
 
-    To model self-collisions, we used the thickness of the cloth which was
-    included in the original cloth simulation as a guideline for the minimum
-    distance we enforced between particles. Whenever a point mass became less than a given
-    thickness away from one of its neighbors, we displaced it in the direction
-    away from the neighbor. After iterating through all the neighbors of the
-    point mass, we applied a correction equal to the average of the corrections needed
-    for the point mass to maintain its distance from each of the neighbors.
+  To model self-collisions, we used the thickness of the cloth which was
+  included in the original cloth simulation as a guideline for the minimum
+  distance we enforced between particles. Whenever a point mass became less than a given
+  thickness away from one of its neighbors, we displaced it in the direction
+  away from the neighbor. After iterating through all the neighbors of the
+  point mass, we applied a correction equal to the average of the corrections needed
+  for the point mass to maintain its distance from each of the neighbors.
 </p>
 <!-- TODO include picture -->
 
@@ -326,7 +334,7 @@
 
 <h2>References</h2>
 <!-- TODO add Macklin + Muller, cheat sheet for kernels, Bubbles Alive -->
-<!-- TODO someone verify these are correct links, copied from project checkpoint
+<!-- TODO someone verify these are correct links, copied from project checkpoint -->
 <ul>
   <li>
     <a href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
@@ -349,7 +357,6 @@
     <p>
   </li>
 </ul>
--->
 <p>
 
 </p>
