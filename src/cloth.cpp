@@ -123,7 +123,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
     // outputFile << "Iteration\n";
     for (PointMass &pm : point_masses) {
-        pm.rest_density = 4000; // 6378.0; //450000; // 1;
+        pm.rest_density = density; // 6378.0; //450000; // 1;
         outputFile << pm.position << "\n";
     }
     outputFile << "\n\n";
