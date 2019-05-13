@@ -71,21 +71,21 @@ void Cloth::buildGrid() {
                 double rand_i = rand() % 2;
                 rand_i -= 1;
                 rand_i /= 2; //10;
-                rand_i = 0;
+//                rand_i = 0;
                 double x = start_left + (r + rand_i) * (unit_h);
                 x = max(0., x);
                 x = min(x, 1.);
                 rand_i = rand() % 2;
                 rand_i -= 1;
                 rand_i /= 2; //10;
-                rand_i = 0;
+//                rand_i = 0;
                 double y = start_right + (c + rand_i) * (unit_w);
                 y = max(0., y);
                 y = min(y, 1.);
                 rand_i = rand() % 2;
                 rand_i -= 1;
                 rand_i /= 2; //10;
-                rand_i = 0;
+//                rand_i = 0;
                 double z = start_bottom + (p + rand_i) * (unit_d);
                 z = max(0., z);
                 z = min(z, 1.);
@@ -123,7 +123,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
     // outputFile << "Iteration\n";
     for (PointMass &pm : point_masses) {
-        pm.rest_density = density;
+        pm.rest_density = 4000; // 6378.0; //450000; // 1;
         outputFile << pm.position << "\n";
     }
     outputFile << "\n\n";
@@ -186,7 +186,8 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             // Update predicted positions
-//            pm.predict_position += pm.delta_position;
+//            std::cout << "Delta p = " << pm.delta_position << "\n";
+            pm.predict_position += pm.delta_position;
             // validity test the predicted positions
             assert(check_vector(pm.predict_position));
         }
@@ -241,15 +242,15 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
 
         // Update vorticity
-//        Vector3D force_vort = force_vorticity_i(pm);
-//        //std::cout << "Vorticity = " << force_vort << "\n";
-//        pm.velocity += (force_vort / mass) * delta_t;
-//
-//        assert(check_vector(pm.velocity));
-//
-//        // Update viscosity (happens in place)
-//        viscosity_constraint(pm);
-//        assert(check_vector(pm.velocity));
+        Vector3D force_vort = force_vorticity_i(pm);
+        //std::cout << "Vorticity = " << force_vort << "\n";
+        pm.velocity += (force_vort / mass) * delta_t;
+
+        assert(check_vector(pm.velocity));
+
+        // Update viscosity (happens in place)
+        viscosity_constraint(pm);
+        assert(check_vector(pm.velocity));
 
         // Update position
         // assert(pm.position.y > -0.15);
@@ -268,7 +269,7 @@ vector<PointMass *> *Cloth::get_neighbors(PointMass &pm) {
     }
     vector<PointMass *> *neighbors = new vector<PointMass *>();
 
-    float h = 0.1;
+    float h = 0.15;
     for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
             for (int dz = -1; dz <= 1; dz++) {
@@ -326,12 +327,7 @@ void Cloth::build_spatial_map() {
 
 // ##########################################################
 double Cloth::calc_h() {
-//    double s = 1.0 / pow(num_width_points * num_height_points * num_depth_points, 1.0/3.0);
-//    return s;
-//    return 0.1;
-//    return 0.25;
     return 8;
-//    return 8;
 }
 
 Vector3D Cloth::calc_delta_q() {
@@ -421,9 +417,9 @@ double Cloth::spiky_kernel(Vector3D pos_diff, double h) {
         double multiple = 15. / (M_PI * pow(h, 6));
         return multiple * pow(h - r, 3);
     }
-    if (r > h) {
-        std::cout << "\n spiky_kernel r= " << r << " h = " << h << "\n";
-    }
+//    if (r > h) {
+//        std::cout << "\n spiky_kernel r= " << r << " h = " << h << "\n";
+//    }
     assert(r > h);
     return 0;
 }
@@ -510,9 +506,9 @@ double Cloth::delta_constraint_pk(PointMass &pm_i, PointMass &pm_k) {
 
 void Cloth::lambda_i(PointMass &pm) {
     double rho_i = calculate_density_neighbors(pm);
-    if ((int)rho_i != 0) {
-        std::cout << "rho_i = " << rho_i << "\n";
-    }
+//    if (rho_i != 0) {
+//        std::cout << "rho_i = " << rho_i << "\n";
+//    }
     double rho_o = pm.rest_density;
     double C_i = (rho_i / rho_o) - 1.0;
 
@@ -646,15 +642,15 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
         if (dist == 0) {
             double small_e = 0.00001;
             neighborToPm = Vector3D();
-            neighborToPm.x = totalCorrection.x + small_e;
-            neighborToPm.y = totalCorrection.y + small_e;
-            neighborToPm.z = totalCorrection.z + small_e;
+            neighborToPm.x = 0;
+            neighborToPm.y = small_e;
+            neighborToPm.z = 0;
         } 
 
         neighborToPm.normalize();
         assert(check_vector(neighborToPm));
 
-        thickness = 1.0 / pow(pm.rest_density, 1.0/3.0);
+//        thickness = 1.0 / pow(pm.rest_density, 1.0/3.0);
 //        cout << "thickness = " << thickness << "\n";
 
         if (dist < thickness) {
@@ -681,7 +677,7 @@ void Cloth::self_collide(PointMass &pm, double simulation_steps) {
 
 float Cloth::hash_position(Vector3D pos) {
     // TODO (Part 4): Hash a 3D position into a unique float identifier that represents membership in some 3D box volume.
-    double s = 1.5 * (1.0 / (num_width_points * num_height_points * num_depth_points));
+    double s = 0.15; //1.5 * (1.0 / (num_width_points * num_height_points * num_depth_points));
     Vector3D hash_indices = Vector3D(trunc((pos.x + 5) / s), trunc((pos.y + 5) / s), trunc((pos.z + 5) / s));
     float hash_value = hash_indices.x * pow(7, 3) + hash_indices.y * pow(7, 2) + hash_indices.z * pow(7, 1);
     return hash_value;
