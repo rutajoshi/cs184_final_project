@@ -378,7 +378,7 @@
 <!-- TODO how we modified project 4 for training on Hive machines-->
 <!-- TODO include picture -->
 <p>
-  To improve the quality of our simulation, we had to render with more particles.
+  To improve the quality of our simulation, we had to easily render more particles.
   However, increasing the number of particles severely decreased the speed of
   the simulation. To remedy this, we decided to outsource the computations
   of position updates to the hive machines by writing each position change to
@@ -387,17 +387,23 @@
   text file. After writing multiple files on the hive machines overnight, we
   read them back in a new simulate loop which updates particle positions by
   iterating through the lines in one of these text files.
+
+  We separated our code for testing, computation, and rendering into different
+  branches to make debugging simpler.
 </p>
 
 <h3>Modeling Particles and Interactions with Planes</h3>
 <!-- TODO plane and self collisions-->
 <!-- generalized plane collision for any orientation -->
 <p>
-  We modeled plane collisions almost the same way we had modeled collisions
-  for a cloth with a plane: when a point mass had a new predicted position
-  which was within or on the other side of a plane as compared to the
-  previous position, we moved the point mass to the correct side of the
-  plane and maintained a small offset from the plane.
+  We originally modeled plane collisions almost the same way we had modeled collisions
+  for a cloth with a plane: when a point mass had a new predicted position which was within
+  or on the other side of a plane as compared to the previous position, we moved the point
+  mass to the correct side of the plane and maintained a small offset from the plane.
+
+  However, we later realized the planes were not necessary for rendering - we could simply
+  bound the particle positions inside the simulation loop to keep the particles within a
+  rectangular box.
 
   To model self-collisions, we used the thickness of the cloth which was
   included in the original cloth simulation as a guideline for the minimum
@@ -458,11 +464,10 @@ in real time -->
 <h2>Contributions</h2>
 <!-- TODO contributions from each team member -->
 <p>
-<b>Ruta </b>   implemented  nearest neighbors logic  and was head debugger.
-<b> Jacqueline </b> implemented the shaders, obsolete planes, and the delta pressure logic. 
-Jacqueline and Ruta implemented the reading of precomputated simulation positions. 
-<b> Eric </b> implemented the vorticity and viscosity logic. 
-We debugged in pairs and did a lot of pair programming.  
+<b>Ruta </b> implemented hash-based spatial map and neighbor finding, remote computation for hive machines, and self-collisions, and debugged the simulation loop and vorticity/viscosity.
+<b> Jacqueline </b> implemented all the shaders, plane collisions, and the incompressibility constraint logic in the simulation loop. Also helped with remote computation.
+<b> Eric </b> implemented the vorticity and viscosity logic. Also helped debug the simulation loop.
+We did a lot of pair programming and group programming.
 
 </p>
 
