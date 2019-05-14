@@ -8,12 +8,23 @@
     margin: auto;
     text-align: left;
     font-weight: 300;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Vollkorn', Palatino, Times;
     color: #121212;
+    font-size: 1.5rem;
+    /*background: #FADADD;*/
+     /*background: #D3D3D3;*/
   }
-  h1, h2, h3, h4 {
-    font-family: 'Source Sans Pro', sans-serif;
+  h1 {
+    /*font-family: 'Source Sans Pro', sans-serif;*/
+    font-size: 2.5rem;
+    /*background: #D3D3D3;*/
   }
+  h2 {
+    /*font-family: 'Source Sans Pro', sans-serif;*/
+    font-size: 1.8rem;
+    /*background: #D3D3D3;*/
+  }
+  
 </style>
 <title>CS 184 Final Project Report</title>
 <!-- <script type="text/x-mathjax-config">
@@ -43,7 +54,8 @@
 
 <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
 <h1 align="middle">Fluid Simulation with Real-Time Density</h1>
-<h2 align="middle">Team: Ruta Joshi (26122656), Jacqueline Forsberg (26814270), Eric D’Sa (26127496)</h2>
+<!-- <h3 align="middle"> Team: </h3> -->
+<h3 align="middle">Ruta Joshi (26122656), Jacqueline Forsberg (26814270), Eric D’Sa (26127496)</h3>
 
 <br><br>
 
@@ -126,11 +138,12 @@
   </pre>
 
   <br><br>
-
+ <p>
   We moved the collision-checking code to be executed after the update to the predicted
   position. We did this because self-collision-checking updates modify the predicted position
   of a particle directly. The paper, in contrast, assumes collision-checking changes the delta which is
   calculated after the density and incompressibility constraints are applied.
+
 
   <br><br>
 
@@ -456,9 +469,7 @@ in real time -->
     <p>
   </li>
 </ul>
-<p>
 
-</p>
 
 <br><br>
 
