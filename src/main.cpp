@@ -514,7 +514,7 @@ int main(int argc, char **argv) {
     setGLFWCallbacks();
 
 //  while (!glfwWindowShouldClose(window)) {
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 500; i++) {
     glfwPollEvents();
 
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
