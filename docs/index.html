@@ -49,11 +49,11 @@
   which represents fluids as as a set of particles that move at variable positions
   and velocities, subject to constraints such as vorticity and viscosity, which
   constrain the movement of the fluid. We retrofitted cloth simulation code from
-  Berkeley's CS 184 Project 4, changed the simulation loop to implement density and pressure based updates, remodeled
-  our code for remote training and fast simple local rendering, and created
-  position based shaders to render the particles more realistically. Finally, we
-  added a density slider to the GUI so that a user can change the
-  density of the fluid in realtime while the simulation is rendering.
+  Berkeley's CS 184 Project 4, changed the simulation loop to implement density
+  and pressure based updates, remodeled our code for remote training and fast simple
+  local rendering, and created position based shaders to render the particles more
+  realistically. Finally, we added a density slider to the GUI so that a user can
+  change the density of the fluid in realtime while the simulation is rendering.
 </p>
 
 <br><br>
@@ -66,8 +66,8 @@
 
 <!-- TODO include picture -->
 <p>
-  This is the final simulation loop we implemented, inspired by Position Based
-  Fluids with a few modifications:
+  This is the final simulation loop we implemented, inspired by Macklin's Position Based
+  Fluids paper, with a few modifications:
 
   <br><br>
 
@@ -83,23 +83,21 @@
       for all particles i do
         calculate λ_i
       end for
+
       for all particles i do
         calculate ∆p_i (based on density and incompressibility constraints)
       end for
+
       for all particles i do
         update position x*_i ⇐ x*_i + ∆p_i
       end for
+
       for all particles i do
         check for self-collisions and displace particles that are too close to their neighbors
       end for
-      for all particles i do
-        for all collision objects co
-            handle collision with point mass i (plane collisions)
-        end for
-      end for
 
       for all particles i do
-        bound particle positions by the bounds of the containing 1x1x1 box (replaces plane collision-checking)
+        bound particle position by the bounds of the containing box (replaces plane collision-checking)
       end for
     end while
 
@@ -112,10 +110,10 @@
 
   <br><br>
 
-  We removed collision checking to be done after the update to the predicted
-  position because the collision updates modify the predicted position directly
-  rather than changing the delta that is calculated after the density and incompressibility
-  constraints are applied.
+  We moved the collision-checking code to be executed after the update to the predicted
+  position. We did this because self-collision-checking updates modify the predicted position
+  of a particle directly. The paper, in contrast, assumes collision-checking changes the delta which is
+  calculated after the density and incompressibility constraints are applied.
 
   <br><br>
 
