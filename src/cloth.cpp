@@ -117,14 +117,14 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     ofstream outputFile;
     string filename = "simulate_data_" + to_string(num_width_points) + ".txt";
     outputFile.open(filename, fstream::app);
-    
+
     double density = 8000;
     density *= (cp->damping + .00001);
 
-    // outputFile << "Iteration\n";
+    outputFile << "Iteration\n";
     for (PointMass &pm : point_masses) {
         pm.rest_density = density; // 6378.0; //450000; // 1;
-        outputFile << pm.position << "\n";
+        outputFile << pm.position.x << "," << pm.position.y << "," << pm.position.z << "\n";
     }
     outputFile << "\n\n";
     outputFile.close();
@@ -210,6 +210,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
         }
 
         // contain within the bounds of the box
+        #pragma omp parallel for
         for (PointMass &pm : point_masses) {
             if (pm.predict_position.x < -0.6) {
                 pm.predict_position.x = -0.6 + 0.01;
