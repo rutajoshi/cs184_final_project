@@ -6,15 +6,21 @@ in vec4 v_position;
 in vec4 v_normal;
 in float out_vertex;
 in float out_height;
+in float out_z;
+in float out_x;
 
 out vec4 out_color;
 
 void main() {
   vec2 pt = gl_PointCoord - vec2(0.5);
-  if(out_vertex == 1.0 && pt.x*pt.x+pt.y*pt.y > 0.25)
-      discard;
-  if(out_vertex == 1.0) 
-  	out_color = vec4(0, .1, out_height, 1);
-  if(out_vertex != 1.0) 
-  	out_color = vec4(.1,0,0,.001);
+  if (out_vertex == 1.0 && pt.x * pt.x + pt.y * pt.y > 0.25)
+    discard;
+
+  if(out_vertex==1.0){
+    out_color = vec4(0, out_height+0.8, 1, 1);
+  }
+
+
+  if (out_vertex != 1.0)
+    out_color = vec4(.1, 0, 0, 0.001);
 }
