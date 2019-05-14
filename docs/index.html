@@ -150,17 +150,20 @@
 <!-- TODO hashing + neighbors -->
 <p>
   We divided our unit cube into a grid, where each grid box has dimensions SxSxS. This allowed us to
-  perform spatial hashing based on a particle's position. To find neighbors, we could then query a
-  hash map for the 27 boxes neighboring (and including) the grid box containing a particle. We then
-  iterated through all of the particles that fell into these boxes and considered particles within
-  a radius S from the input particle to be neighbors.
+  perform spatial hashing based on a particle's position. In a 3-dimensional grid, one grid box has neighboring
+  boxes in all 3 axes - there is a 3x3x3 grid of boxes with the primary box at the center.
+
+  To find neighbors, we could then query a hash map for the 27 boxes neighboring (and including) the grid box
+  containing a particle. We then iterated through all of the particles that fell into these boxes and considered
+  particles within a radius S from the input particle to be neighbors. This resulted in considering all particles
+  in a sphere of radius S centered at the primary particle.
 
   The value of S was based on the average distance between particles. Since we were using a 10x10x10
   grid of particles in a 1x1x1 box, the average distance was 0.1. We multiplied this by 1.5 to increase
   particle cohesion, so that S = 0.15.
 </p>
 
-<h4>Incompressibility</h4>
+<h4>Incompressibility (Pressure and Density Constraints)</h4>
 <!-- TODO pressure - incompressibility, tensile instability, discuss clumping / show video + picture -->
 <p>
   Our next step was to enforce incompressibility, in which we maintain a constant density throughout the
@@ -173,7 +176,6 @@
   <div align="middle">
     $ \large \mathcal{C}_i(\mathbf{p}_1, \cdots, \mathbf{p}_n) = \frac{\rho_i}{\rho_0} - 1$
   </div>
-  <!-- <img src="final_images/pressure/pressure_constraint.png"/> -->
   <br>
 
   To estimate the density of a particle, we use the following equation, where
@@ -183,7 +185,6 @@
   <br>
   <div align="middle">
     $ \large \rho_i = \sum_j m_j \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
-  <!-- <img src="final_images/pressure/mass_density.png"/> -->
 </div>
   <br>
 
@@ -194,7 +195,6 @@
   <div align="middle">
     $ \large\mathcal{C}(\mathbf{p} + \Delta \mathbf{p}) = 0$
   </div>
-  <!-- <img src="final_images/pressure/pressure_solver.png"/> -->
   <br>
 
   We solved for this constraint by applying Newton steps along a gradient:
@@ -202,18 +202,16 @@
   <br>
   <div align="middle">
     $\large \mathcal{C}(\mathbf{p} + \Delta \mathbf{p})  \approx \mathcal{C}(\mathbf{p}) + \nabla \mathcal{C}^T \Delta \mathbf{p} = 0$
-  <!-- <img src="final_images/pressure/pressure_newton_step.png"/> -->
   </div>
   <br>
 
-  For this, we needed to know the gradient of this constraint. We define this gradient
+  To solve for the delta in position, we needed to know the gradient of this constraint. We define this gradient
   with respect to a particle <b>$\mathbf{p}_k$</b> as:
 
   <br>
   <div align="middle">
     $\large \nabla_{\mathbf{p}_k} \mathcal{C}_i= \frac{1}{\rho_0}\sum_j \nabla_{\mathbf{p}_k} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
   </div>
-  <!-- <img src="final_images/pressure/constraint_gradient.png"/> -->
   <br>
 
   After that, we assigned a weight to the gradient, which defines how far we travel along
@@ -226,7 +224,6 @@
     $\large
     \lambda_i = -\frac{\mathcal{C}_i(\mathbf{p}_1, \cdots, \mathbf{p}_n)}{\sum_k \vert \nabla_{\mathbf{p}_k} \mathcal{C}_i \vert^2 + \epsilon}$
   </div>
-  <!-- <img src="final_images/pressure/lambda_i.png"/> -->
   <br>
 
   Plugging the lambdas of a particle and its neighbors into the solved version of the Newton step,
@@ -238,7 +235,6 @@
     \Delta \mathbf{p}_i = \frac{1}{\rho_0}\sum_j (\lambda_i + \lambda_j) \nabla \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
 
   </div>
-  <!-- <img src="final_images/pressure/pressure_update.png"/> -->
   <br>
 </p>
 
@@ -254,7 +250,6 @@
     s_{corr} = -k \Bigg( \frac{\mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)} {\mathcal{W}(\Delta\mathbf{q}, h)}
     \Bigg) ^n $
   </div>
-  <!-- <img src="final_images/pressure/s_corr.png"/> -->
   <br>
 
   With this factor added in, our final pressure update becomes:
@@ -265,7 +260,6 @@
     \Delta \mathbf{p}_i = \frac{1}{\rho_0}\sum_j (\lambda_i + \lambda_j + s_{corr}) \nabla \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
 
   </div>
-  <!-- <img src="final_images/pressure/pressure_update_s_corr.png"/> -->
   <br>
 </p>
 
@@ -281,7 +275,6 @@
     $\large
     \omega_i = \nabla \times \mathbf{v} =  \sum_j \mathbf{v}_{ij}\times \nabla_{\mathbf{p}_j} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
   </div>
-  <!-- <img src="final_images/vorticity/w_i.png"/> -->
   <br>
 
   <!-- TODO what is a location vector -->
