@@ -52,7 +52,7 @@ bool ClothSimulator::isAlive() { return is_alive; }
 void ClothSimulator::simulateRemotely() {
     clock_t begin = clock();
 
-    for (int j = 0; j < 100; j++) {
+    for (int j = 0; j < 500; j++) {
         cout << "Iteration #: " << j << "\n";
 
         vector<Vector3D> external_accelerations = {gravity};
@@ -64,5 +64,5 @@ void ClothSimulator::simulateRemotely() {
 
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    std::cout << "This round of 100 iterations took: " << elapsed_secs << " seconds = " << (elapsed_secs / 60) << " minutes = " << (elapsed_secs / 60 / 60) << " hours.\n";
+    std::cout << "This round of 500 iterations took: " << elapsed_secs << " seconds = " << (elapsed_secs / 60) << " minutes = " << (elapsed_secs / 60 / 60) << " hours.\n";
 }
