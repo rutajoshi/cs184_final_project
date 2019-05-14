@@ -28,6 +28,7 @@
   .loop_box {
     background-color: #9BBED6;
     padding: 20px 20px 20px 20px;
+    font-size: 1.5rem;
   }
 </style>
 <title>CS 184 Final Project Report</title>
@@ -111,7 +112,8 @@
         predict position x*_i ⇐ x_i +∆t(v_i)
       end for
 
-      build a spatial map to find neighboring particles N_i for all point masses given predicted position x*_i
+      build a spatial map to find neighboring particles N_i for all point 
+        masses given predicted position x*_i
 
       while iter < solverIterations do
         for all particles i do
@@ -127,11 +129,13 @@
         end for
 
         for all particles i do
-          check for self-collisions and displace particles that are too close to their neighbors
+          check for self-collisions and displace particles that are too close to 
+            their neighbors
         end for
 
         for all particles i do
-          bound particle position by the bounds of the containing box (replaces plane collision-checking)
+          bound particle position by the bounds of the containing box 
+            (replaces plane collision-checking)
         end for
       end while
 
