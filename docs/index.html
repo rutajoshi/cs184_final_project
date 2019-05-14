@@ -25,6 +25,10 @@
     /*background: #D3D3D3;*/
   }
   
+  .loop_box {
+    background-color: #9BBED6;
+    padding: 20px 20px 20px 20px;
+  }
 </style>
 <title>CS 184 Final Project Report</title>
 <!-- <script type="text/x-mathjax-config">
@@ -100,42 +104,44 @@
 
   <br><br>
 
-  <pre class="prettyprint">
-    for all particles i do
-      apply forces v_i ⇐ v_i + ∆t(f_{external} / mass)
-      predict position x*_i ⇐ x_i +∆t(v_i)
-    end for
-
-    build a spatial map to find neighboring particles N_i for all point masses given predicted position x*_i
-
-    while iter < solverIterations do
+  <div class="loop_box">
+    <pre class="prettyprint">
       for all particles i do
-        calculate λ_i
+        apply forces v_i ⇐ v_i + ∆t(f_{external} / mass)
+        predict position x*_i ⇐ x_i +∆t(v_i)
       end for
 
-      for all particles i do
-        calculate ∆p_i (based on density and incompressibility constraints)
-      end for
+      build a spatial map to find neighboring particles N_i for all point masses given predicted position x*_i
+
+      while iter < solverIterations do
+        for all particles i do
+          calculate λ_i
+        end for
+
+        for all particles i do
+          calculate ∆p_i (based on density and incompressibility constraints)
+        end for
+
+        for all particles i do
+          update position x*_i ⇐ x*_i + ∆p_i
+        end for
+
+        for all particles i do
+          check for self-collisions and displace particles that are too close to their neighbors
+        end for
+
+        for all particles i do
+          bound particle position by the bounds of the containing box (replaces plane collision-checking)
+        end for
+      end while
 
       for all particles i do
-        update position x*_i ⇐ x*_i + ∆p_i
+        update velocity v_i ⇐ (1/∆t)(x*_i − x_i)
+        apply vorticity confinement and XSPH viscosity as updates to v_i
+        update position x_i ⇐ x*_i
       end for
-
-      for all particles i do
-        check for self-collisions and displace particles that are too close to their neighbors
-      end for
-
-      for all particles i do
-        bound particle position by the bounds of the containing box (replaces plane collision-checking)
-      end for
-    end while
-
-    for all particles i do
-      update velocity v_i ⇐ (1/∆t)(x*_i − x_i)
-      apply vorticity confinement and XSPH viscosity as updates to v_i
-      update position x_i ⇐ x*_i
-    end for
-  </pre>
+    </pre>
+  </div>
 
   <br><br>
  <p>
@@ -163,17 +169,20 @@
 <!-- TODO hashing + neighbors -->
 <p>
   We divided our unit cube into a grid, where each grid box has dimensions SxSxS. This allowed us to
-  perform spatial hashing based on a particle's position. To find neighbors, we could then query a
-  hash map for the 27 boxes neighboring (and including) the grid box containing a particle. We then
-  iterated through all of the particles that fell into these boxes and considered particles within
-  a radius S from the input particle to be neighbors.
+  perform spatial hashing based on a particle's position. In a 3-dimensional grid, one grid box has neighboring
+  boxes in all 3 axes - there is a 3x3x3 grid of boxes with the primary box at the center.
+
+  To find neighbors, we could then query a hash map for the 27 boxes neighboring (and including) the grid box
+  containing a particle. We then iterated through all of the particles that fell into these boxes and considered
+  particles within a radius S from the input particle to be neighbors. This resulted in considering all particles
+  in a sphere of radius S centered at the primary particle.
 
   The value of S was based on the average distance between particles. Since we were using a 10x10x10
   grid of particles in a 1x1x1 box, the average distance was 0.1. We multiplied this by 1.5 to increase
   particle cohesion, so that S = 0.15.
 </p>
 
-<h4>Incompressibility</h4>
+<h4>Incompressibility (Pressure and Density Constraints)</h4>
 <!-- TODO pressure - incompressibility, tensile instability, discuss clumping / show video + picture -->
 <p>
   Our next step was to enforce incompressibility, in which we maintain a constant density throughout the
@@ -186,7 +195,6 @@
   <div align="middle">
     $ \large \mathcal{C}_i(\mathbf{p}_1, \cdots, \mathbf{p}_n) = \frac{\rho_i}{\rho_0} - 1$
   </div>
-  <!-- <img src="final_images/pressure/pressure_constraint.png"/> -->
   <br>
 
   To estimate the density of a particle, we use the following equation, where
@@ -196,7 +204,6 @@
   <br>
   <div align="middle">
     $ \large \rho_i = \sum_j m_j \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
-  <!-- <img src="final_images/pressure/mass_density.png"/> -->
 </div>
   <br>
 
@@ -207,7 +214,6 @@
   <div align="middle">
     $ \large\mathcal{C}(\mathbf{p} + \Delta \mathbf{p}) = 0$
   </div>
-  <!-- <img src="final_images/pressure/pressure_solver.png"/> -->
   <br>
 
   We solved for this constraint by applying Newton steps along a gradient:
@@ -215,18 +221,16 @@
   <div align="middle">
 
     $\large \mathcal{C}(\mathbf{p} + \Delta \mathbf{p})  \approx \mathcal{C}(\mathbf{p}) + \nabla \mathcal{C}^T \Delta \mathbf{p} = 0$
-  <!-- <img src="final_images/pressure/pressure_newton_step.png"/> -->
   </div>
   <br>
 
-  For this, we needed to know the gradient of this constraint. We define this gradient
+  To solve for the delta in position, we needed to know the gradient of this constraint. We define this gradient
   with respect to a particle <b>$\mathbf{p}_k$</b> as:
 
   <br>
   <div align="middle">
     $\large \nabla_{\mathbf{p}_k} \mathcal{C}_i= \frac{1}{\rho_0}\sum_j \nabla_{\mathbf{p}_k} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
   </div>
-  <!-- <img src="final_images/pressure/constraint_gradient.png"/> -->
   <br>
 
   After that, we assigned a weight to the gradient, which defines how far we travel along
@@ -239,7 +243,6 @@
     $\large
     \lambda_i = -\frac{\mathcal{C}_i(\mathbf{p}_1, \cdots, \mathbf{p}_n)}{\sum_k \vert \nabla_{\mathbf{p}_k} \mathcal{C}_i \vert^2 + \epsilon}$
   </div>
-  <!-- <img src="final_images/pressure/lambda_i.png"/> -->
   <br>
 
   Plugging the lambdas of a particle and its neighbors into the solved version of the Newton step,
@@ -251,7 +254,6 @@
     \Delta \mathbf{p}_i = \frac{1}{\rho_0}\sum_j (\lambda_i + \lambda_j) \nabla \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
 
   </div>
-  <!-- <img src="final_images/pressure/pressure_update.png"/> -->
   <br>
 </p>
 
@@ -267,7 +269,6 @@
     s_{corr} = -k \Bigg( \frac{\mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)} {\mathcal{W}(\Delta\mathbf{q}, h)}
     \Bigg) ^n $
   </div>
-  <!-- <img src="final_images/pressure/s_corr.png"/> -->
   <br>
 
   With this factor added in, our final pressure update becomes:
@@ -278,7 +279,6 @@
     \Delta \mathbf{p}_i = \frac{1}{\rho_0}\sum_j (\lambda_i + \lambda_j + s_{corr}) \nabla \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
 
   </div>
-  <!-- <img src="final_images/pressure/pressure_update_s_corr.png"/> -->
   <br>
 </p>
 
@@ -294,7 +294,6 @@
     $\large
     \omega_i = \nabla \times \mathbf{v} =  \sum_j \mathbf{v}_{ij}\times \nabla_{\mathbf{p}_j} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
   </div>
-  <!-- <img src="final_images/vorticity/w_i.png"/> -->
   <br>
 
   <!-- TODO what is a location vector -->
@@ -398,7 +397,7 @@
 <!-- TODO how we modified project 4 for training on Hive machines-->
 <!-- TODO include picture -->
 <p>
-  To improve the quality of our simulation, we had to render with more particles.
+  To improve the quality of our simulation, we had to easily render more particles.
   However, increasing the number of particles severely decreased the speed of
   the simulation. To remedy this, we decided to outsource the computations
   of position updates to the hive machines by writing each position change to
@@ -407,17 +406,23 @@
   text file. After writing multiple files on the hive machines overnight, we
   read them back in a new simulate loop which updates particle positions by
   iterating through the lines in one of these text files.
+
+  We separated our code for testing, computation, and rendering into different
+  branches to make debugging simpler.
 </p>
 
 <h3>Modeling Particles and Interactions with Planes</h3>
 <!-- TODO plane and self collisions-->
 <!-- generalized plane collision for any orientation -->
 <p>
-  We modeled plane collisions almost the same way we had modeled collisions
-  for a cloth with a plane: when a point mass had a new predicted position
-  which was within or on the other side of a plane as compared to the
-  previous position, we moved the point mass to the correct side of the
-  plane and maintained a small offset from the plane.
+  We originally modeled plane collisions almost the same way we had modeled collisions
+  for a cloth with a plane: when a point mass had a new predicted position which was within
+  or on the other side of a plane as compared to the previous position, we moved the point
+  mass to the correct side of the plane and maintained a small offset from the plane.
+
+  However, we later realized the planes were not necessary for rendering - we could simply
+  bound the particle positions inside the simulation loop to keep the particles within a
+  rectangular box.
 
   To model self-collisions, we used the thickness of the cloth which was
   included in the original cloth simulation as a guideline for the minimum
@@ -476,11 +481,10 @@ in real time -->
 <h2>Contributions</h2>
 <!-- TODO contributions from each team member -->
 <p>
-<b>Ruta </b>   implemented  nearest neighbors logic  and was head debugger.
-<b> Jacqueline </b> implemented the shaders, obsolete planes, and the delta pressure logic. 
-Jacqueline and Ruta implemented the reading of precomputated simulation positions. 
-<b> Eric </b> implemented the vorticity and viscosity logic. 
-We debugged in pairs and did a lot of pair programming.  
+<b>Ruta </b> implemented hash-based spatial map and neighbor finding, remote computation for hive machines, and self-collisions, and debugged the simulation loop and vorticity/viscosity.
+<b> Jacqueline </b> implemented all the shaders, plane collisions, and the incompressibility constraint logic in the simulation loop. Also helped with remote computation.
+<b> Eric </b> implemented the vorticity and viscosity logic. Also helped debug the simulation loop.
+We did a lot of pair programming and group programming.
 
 </p>
 
