@@ -211,10 +211,10 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
 
         // contain within the bounds of the box
         for (PointMass &pm : point_masses) {
-            if (pm.predict_position.x < -0.6) {
-                pm.predict_position.x = -0.6 + 0.01;
-            } else if (pm.predict_position.x > 4.2) {
-                pm.predict_position.x = 4.2 - 0.01;
+            if (pm.predict_position.x < -3.0) {
+                pm.predict_position.x = -3.0 + 0.01;
+            } else if (pm.predict_position.x > 3.0) {
+                pm.predict_position.x = 3.0 - 0.01;
             }
 
             if (pm.predict_position.y < -0.6) {
