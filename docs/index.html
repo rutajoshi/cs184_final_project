@@ -16,6 +16,12 @@
   }
 </style>
 <title>CS 184 Final Project Report</title>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
 </head>
@@ -128,7 +134,7 @@
   We first applied external forces (e.g. gravity) to each particle. We take a force and calculate
   an acceleration from it by dividing by the particle mass (1 kg, which is trivial). Then, we account
   for this acceleration in the velocity and position of each point mass using discrete time updates
-  given a timestep delta_t.
+  given a timestep $\Delta t$.
 </p>
 
 <h4>Finding Neighbors</h4>
@@ -151,72 +157,106 @@
   Our next step was to enforce incompressibility, in which we maintain a constant density throughout the
   fluid. To do this, we displaced each particle relative to its neighbors so that the local density was
   constrained to be the same as the fluid's rest density.
-  We were solving for the following constraint, in which <b>rho_i</b> is the density of the particle, and
-  <b>rho_o</b> is the rest density of the fluid:
+  We were solving for the following constraint, in which <b>$\rho_i$</b> is the density of the particle, and
+  <b>$\rho_0$</b> is the rest density of the fluid:
 
   <br>
-  <img src="final_images/pressure/pressure_constraint.png"/>
+  <div align="middle">
+    $ \large \mathcal{C}_i(\mathbf{p}_1, \cdots, \mathbf{p}_n) = \frac{\rho_i}{\rho_0} - 1$
+  </div>
+  <!-- <img src="final_images/pressure/pressure_constraint.png"/> -->
   <br>
 
   To estimate the density of a particle, we use the following equation, where
-  <b>W</b> is the poly6 kernel. This kernel is used for smoothing and is equal to
+  <b>$\mathcal{W}$</b> is the poly6 kernel. This kernel is used for smoothing and is equal to
   zero at the center:
 
   <br>
-  <img src="final_images/pressure/mass_density.png"/>
+  <div align="middle">
+    $ \large \rho_i = \sum_j m_j \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
+  <!-- <img src="final_images/pressure/mass_density.png"/> -->
+</div>
   <br>
 
-  Given this, when we move a particle by a small amount, <b>delta_p</b>, the density
+  Given this, when we move a particle by a small amount, <b>$\Delta \mathbf{p}$</b>, the density
   constraint should still be valid. In other words:
 
   <br>
-  <img src="final_images/pressure/pressure_solver.png"/>
+  <div align="middle">
+    $ \large\mathcal{C}(\mathbf{p} + \Delta \mathbf{p}) = 0$
+  </div>
+  <!-- <img src="final_images/pressure/pressure_solver.png"/> -->
   <br>
 
   We solved for this constraint by applying Newton steps along a gradient:
 
   <br>
-  <img src="final_images/pressure/pressure_newton_step.png"/>
+  <div align="middle">
+    $\large \mathcal{C}(\mathbf{p} + \Delta \mathbf{p})  \approx \mathcal{C}(\mathbf{p}) + \nabla \mathcal{C}^T \Delta \mathbf{p} = 0$
+  <!-- <img src="final_images/pressure/pressure_newton_step.png"/> -->
+  </div>
   <br>
 
   For this, we needed to know the gradient of this constraint. We define this gradient
-  with respect to a particle <b>p_k</b> as:
+  with respect to a particle <b>$\mathbf{p}_k$</b> as:
 
   <br>
-  <img src="final_images/pressure/constraint_gradient.png"/>
+  <div align="middle">
+    $\large \nabla_{\mathbf{p}_k} \mathcal{C}_i= \frac{1}{\rho_0}\sum_j \nabla_{\mathbf{p}_k} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
+  </div>
+  <!-- <img src="final_images/pressure/constraint_gradient.png"/> -->
   <br>
 
   After that, we assigned a weight to the gradient, which defines how far we travel along
-  our gradient. We do this differently for each particle, so we assign a variable <b>lambda_i</b>
-  as a weight for the gradient with respect to a particle.
-  <b>i</b>:
+  our gradient. We do this differently for each particle, so we assign a variable <b>$\lambda_i$</b>
+  as a weight for the gradient with respect to $i$th particle,
+  <b>$\mathbf{p}_i$</b>:
 
   <br>
-  <img src="final_images/pressure/lambda_i.png"/>
+  <div align="middle">
+    $\large
+    \lambda_i = -\frac{\mathcal{C}_i(\mathbf{p}_1, \cdots, \mathbf{p}_n)}{\sum_k \vert \nabla_{\mathbf{p}_k} \mathcal{C}_i \vert^2 + \epsilon}$
+  </div>
+  <!-- <img src="final_images/pressure/lambda_i.png"/> -->
   <br>
 
   Plugging the lambdas of a particle and its neighbors into the solved version of the Newton step,
   we get a delta for the position of a particle as follows:
 
   <br>
-  <img src="final_images/pressure/pressure_update.png"/>
+  <div align="middle">
+    $ \large
+    \Delta \mathbf{p}_i = \frac{1}{\rho_0}\sum_j (\lambda_i + \lambda_j) \nabla \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
+
+  </div>
+  <!-- <img src="final_images/pressure/pressure_update.png"/> -->
   <br>
 </p>
 
 <h4>Tensile Instability</h4>
 <p>
   However, this pressure update often results in particle clumping due to negative pressures that
-  occur when a particle does not have enough neighbors. To remedy this, we add a factor <b>s_corr</b>
+  occur when a particle does not have enough neighbors. To remedy this, we add a factor <b>$s_{corr}$</b>
   to artifically introduce tensile instability into the pressure update:
 
   <br>
-  <img src="final_images/pressure/s_corr.png"/>
+  <div align="middle">
+    $\large
+    s_{corr} = -k \Bigg( \frac{\mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)} {\mathcal{W}(\Delta\mathbf{q}, h)}
+    \Bigg) ^n $
+  </div>
+  <!-- <img src="final_images/pressure/s_corr.png"/> -->
   <br>
 
   With this factor added in, our final pressure update becomes:
 
   <br>
-  <img src="final_images/pressure/pressure_update_s_corr.png"/>
+  <div align="middle">
+    $ \large
+    \Delta \mathbf{p}_i = \frac{1}{\rho_0}\sum_j (\lambda_i + \lambda_j + s_{corr}) \nabla \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
+
+  </div>
+  <!-- <img src="final_images/pressure/pressure_update_s_corr.png"/> -->
   <br>
 </p>
 
@@ -225,10 +265,14 @@
 <p>
   Vorticity accounts for turbulent motion, causing sloshing and
   circular movements within a fluid. We calculate the vorticity of a particle
-  using the following estimator, where <b>v_ij = v_j - v_i</b>:
+  using the following estimator, where <b>$\mathbf{v}_{ij} = \mathbf{v}_j - \mathbf{v}_i$</b>:
 
   <br>
-  <img src="final_images/vorticity/w_i.png"/>
+  <div align="middle">
+    $\large
+    \omega_i = \nabla \times \mathbf{v} =  \sum_j \mathbf{v}_{ij}\times \nabla_{\mathbf{p}_j} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
+  </div>
+  <!-- <img src="final_images/vorticity/w_i.png"/> -->
   <br>
 
   <!-- TODO what is a location vector -->
@@ -237,24 +281,39 @@
   and its neighbors:
 
   <br>
-  <img src="final_images/vorticity/center_of_mass.png"/>
+  <div align="middle">
+
+
+    $ \large
+    \mathbf{p}_i^{cm} = \frac{m_i \mathbf{p}_i + \sum_j m_j \mathbf{p}_j} {m_i+\sum_j m_j}$
+  </div>
+  <!-- <img src="final_images/vorticity/center_of_mass.png"/> -->
   <br>
 
-  We use this to calculate a location vector <b>eta</b>, which we normalize:
+  We use this to calculate a location vector <b>$\eta$</b>, which we normalize:
 
   <br>
-  <img src="final_images/vorticity/eta.png"/>
+  <div align="middle">
+    $\large \eta = \mathbf{p}_i^{cm}  - \mathbf{p}_i$
+  </div>
+  <!-- <img src="final_images/vorticity/eta.png"/> -->
   <br>
 
   <br>
-  <img src="final_images/vorticity/eta_normalized.png"/>
+  <div align="middle">
+    $\large \mathbf{N} =  \frac{\eta}{\vert \eta \vert}$
+  </div>
+  <!-- <img src="final_images/vorticity/eta_normalized.png"/> -->
   <br>
 
-  We then use the location vector <b>eta</b> with a vorticity <b>w_i</b> to
+  We then use the location vector <b>$\eta$</b> with a vorticity <b>$\omega_i$</b> to
   calculate a vorticity force:
 
   <br>
-  <img src="final_images/vorticity/f_vorticity_i.png"/>
+  <div align="middle">
+    $\large \mathbf{f}_i ^{vorticity} = \epsilon \big(\mathbf{N} \times \omega_i\big)$ 
+  </div>
+  <!-- <img src="final_images/vorticity/f_vorticity_i.png"/> -->
   <br>
 </p>
 
@@ -268,7 +327,10 @@
   update:
 
   <br>
-  <img src="final_images/viscosity/viscosity_eq.png"/>
+  <div align="middle">
+    $\large \mathbf{v}_i^{new} = \mathbf{v}_i + c\sum_j \mathbf{v}_{ij} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
+  </div>
+  <!-- <img src="final_images/viscosity/viscosity_eq.png"/> -->
   <br>
 </p>
 
@@ -305,7 +367,9 @@
 </p>
 <!-- TODO include picture -->
 <br>
-<img src="final_images/modifying_starter_code/bottom_plane.png"/>
+<div align="middle">
+<img src="final_images/modifying_starter_code/bottom_plane.png" align="middle" width="500px" />
+</div>
 <br>
 
 <h3>Modifying Project 4 Starter Code for Remote Training</h3>
@@ -343,7 +407,9 @@
 </p>
 <!-- TODO include picture -->
 <br>
-<img src="final_images/modifying_starter_code/box_side_view.png"/>
+<div align="middle">
+<img src="final_images/modifying_starter_code/box_side_view.png" align="middle" width="500px"/>
+</div>
 <br>
 
 <h2>Results</h2>
