@@ -120,7 +120,7 @@ void Cloth::loadTrajectoriesFromFile(string filename) {
     // go through each line in the file and append to the correct point mass's trajectory
     string line;
     string delim = ",";
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 1000; i++) {
         // read the first line which says Iteration
         getline(inFile, line);
         if (line.compare("Iteration") != 0) {
@@ -128,7 +128,7 @@ void Cloth::loadTrajectoriesFromFile(string filename) {
             exit(1);
         }
 
-        // read all 200 point mass positions and push to trajectories
+        // read all 1000 point mass positions and push to trajectories
         for (PointMass &pm : point_masses) {
             getline(inFile, line);
 
