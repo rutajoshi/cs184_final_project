@@ -165,7 +165,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     //#pragma omp parallel for
     for (PointMass &pm : point_masses) {
         pm.position = pm.trajectory[iteration];
-        usleep(50);
+//        usleep(50);
     }
 }
 
