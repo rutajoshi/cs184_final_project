@@ -37,12 +37,6 @@
 
 </style>
 <title>CS 184 Final Project Report</title>
-<!-- <script type="text/x-mathjax-config">
-  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
-</script>
-<script type="text/javascript"
-  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script> -->
   <script type="text/x-mathjax-config"> MathJax.Hub.Config({ TeX: { equationNumbers: { autoNumber: "all" } } }); </script>
        <script type="text/x-mathjax-config">
          MathJax.Hub.Config({
@@ -64,22 +58,24 @@
 
 <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
 <h1 align="middle">Fluid Simulation with Real-Time Density</h1>
-<!-- <h3 align="middle"> Team: </h3> -->
 <h3 align="middle">Ruta Joshi (26122656), Jacqueline Forsberg (26814270), Eric D’Sa (26127496)</h3>
 
 <br><br>
 
-<!-- TODO standardize all equations with LaTeX -->
-<!-- <div align="middle">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/y4y9h6AsaaQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-  <figcaption align="middle">Video</figcaption>
-</div> -->
+<!-- TODO Put Final Video in -->
+
+
+<div align="middle">
+   <iframe width="560" height="315" src="https://www.youtube.com/embed/KWIiXedo_4o" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+    <figcaption align="middle">Fluid Simulation in 3D</figcaption>
+  </div>
+
 
 <br><br>
 
 <h2>Abstract</h2>
 <p>
-  <!-- TODO include link to Position Based Fluids paper -->
   Fluid simulation is a task within physics-based simulation which is used in
   film and video games to create the visual effect of water or other fluids.
   The density of a fluid, among other properties, affects how its particles
@@ -108,10 +104,7 @@
 </p>
 
 <h3>Fluid Simulation Loop</h3>
-<!-- [done above] TODO show + explain pseudocode for Macklin and Muller loop, include main equations-->
-<!-- TODO explain kernels-->
 
-<!-- TODO include picture -->
 <p>
   This is the final simulation loop we implemented, inspired by Macklin's Position Based
   Fluids paper, with a few modifications:
@@ -171,7 +164,6 @@
 </p>
 
 <h4>External Forces</h4>
-<!-- TODO picture -->
   <p>We first applied external forces (e.g. gravity) to each particle. We take a force and calculate
   an acceleration from it by dividing by the particle mass (1 kg, which is trivial). Then, we account
   for this acceleration in the velocity and position of each point mass using discrete time updates
@@ -184,14 +176,13 @@
 
 
 <h4>Finding Neighbors</h4>
-<!-- TODO hashing + neighbors -->
 <p>
   We divided our unit cube into a grid, where each grid box has dimensions SxSxS. This allowed us to
   perform spatial hashing based on a particle's position. In a 3-dimensional grid, one grid box has neighboring
   boxes in all 3 axes - there is a 3x3x3 grid of boxes with the primary box at the center.
 
   To find neighbors, we could then query a hash map for the 27 boxes neighboring (and including) the grid box
-  containing a particle. We then iterated through all of the particles that fell into these boxes and considered
+  containing the particle. We then iterated through all of the particles that fell into these boxes and considered
   particles within a radius S from the input particle to be neighbors. This resulted in considering all particles
   in a sphere of radius S centered at the primary particle.
 
@@ -201,7 +192,6 @@
 </p>
 
 <h4>Incompressibility (Pressure and Density Constraints)</h4>
-<!-- TODO pressure - incompressibility, tensile instability, discuss clumping / show video + picture -->
 
 <p>
   Our next step was to enforce incompressibility, in which we maintain a constant density throughout the
@@ -312,8 +302,8 @@
 
 
 
-<h4>Vorticity</h4>
-<!-- TODO vorticity - implemented a different version of eta from Bubbles Alive -->
+<h4>Vorticity & Viscosity</h4>
+
 <p>
   Vorticity accounts for turbulent motion, causing sloshing and
   circular movements within a fluid. We calculate the vorticity of a particle
@@ -326,7 +316,7 @@
   </div>
   <br>
 
-  <!-- TODO what is a location vector -->
+  
   Additionally, we need a location vector, which is a vector pointing toward
   the center of the circular motion. We calculate the center of mass of a point mass
   and its neighbors:
@@ -362,7 +352,7 @@
   <br>
 </p>
 
-<h4>Viscosity</h4>
+<br>
 <!-- TODO viscosity -->
 <p>
   Viscosity defines how thick a fluid is. It also creates coherent motion within
@@ -393,7 +383,7 @@
   suggested 0.1. Using Macklin's parameters caused the kernel gradients to explode. For students
   referencing this writeup in the future, we have compiled a list of our own constants, should
   they be useful:
-
+  <div class="loop_box">
   <pre class="prettyprint">
     number of particles = 10x10x10 to 15x15x15
     fluid rest density = 4000 (kg/m^3)
@@ -406,8 +396,11 @@
     Tensile instability k = 500
     Tensile instability n = 4
     Magnitude of delta_q = 0.03
-    s_corr = result of calculations using the above (instead of hardcoded value suggested by Macklin)
+    s_corr = result of calculations using the above 
+            (instead of hardcoded value suggested by Macklin)
   </pre>
+  </div>
+  
 
   We also struggled to understand the mathematical intuition behind kernel functions.
   This was easy to solve through extensive googling. We recommend the SPH Survival Kit
@@ -437,7 +430,7 @@
 </p>
 
 <h3>Density Slider</h3>
-<!-- TODO include picture -->
+
 
 <p>
   We wanted to see changes in a fluid density in real time, so we added a density
@@ -456,7 +449,7 @@
 <br><br>
 
 <h3>Modifying Project 4 Starter Code: Cloths to Fluids</h3>
-<!-- TODO how we modified project 4 for our simulation-->
+
 <p>
   We began by modifying code from
   <a href="https://cal-cs184-student.github.io/p4-clothsim-rutajoshi/">Project 4: Cloth Simulation</a>.
@@ -474,7 +467,7 @@
   particle simulation with points was much faster, since rendering spheres with any
   type of shading took much more computation time.
 </p>
-<!-- TODO include picture -->
+
 <br>
 <div align="middle">
 <img src="final_images/modifying_starter_code/bottom_plane.png" align="middle" width="500px" />
@@ -482,8 +475,7 @@
 <br>
 
 <h3>Modifying Project 4 Starter Code for Remote Training</h3>
-<!-- TODO how we modified project 4 for training on Hive machines-->
-<!-- TODO include picture -->
+
 <p>
   To improve the quality of our simulation, we had to easily render more particles.
   However, increasing the number of particles severely decreased the speed of
@@ -500,8 +492,6 @@
 </p>
 
 <h3>Modeling Particles and Interactions with Planes</h3>
-<!-- TODO plane and self collisions-->
-<!-- generalized plane collision for any orientation -->
 <p>
   We originally modeled plane collisions almost the same way we had modeled collisions
   for a cloth with a plane: when a point mass had a new predicted position which was within
@@ -520,7 +510,6 @@
   point mass, we applied a correction equal to the average of the corrections needed
   for the point mass to maintain its distance from each of the neighbors.
 </p>
-<!-- TODO include picture -->
 <br>
 <div align="middle">
 <img src="final_images/modifying_starter_code/box_side_view.png" align="middle" width="500px"/>
@@ -534,8 +523,10 @@
 <!-- one video for water, one video/gif for different density, one video of changing
 in real time -->
 <p>
-
-RUTA UPLOAD THE VIDEOS TO YOUTUBE PLEASE
+<div align="middle">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/LBIJp4CO32A" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <figcaption align="middle"> Overview Video </figcaption>
+</div>
 <div align="middle">
   <iframe width="560" height="315" src="https://www.youtube.com/embed/y4y9h6AsaaQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
   <figcaption align="middle">Fully Implemented Simulation Loop</figcaption>
@@ -546,8 +537,6 @@ RUTA UPLOAD THE VIDEOS TO YOUTUBE PLEASE
 <br><br>
 
 <h2>References</h2>
-<!-- TODO add Macklin + Muller, cheat sheet for kernels, Bubbles Alive -->
-<!-- TODO someone verify these are correct links, copied from project checkpoint -->
 <ul>
   <li>
     <p>
@@ -593,7 +582,6 @@ RUTA UPLOAD THE VIDEOS TO YOUTUBE PLEASE
 <br><br>
 
 <h2>Contributions</h2>
-<!-- TODO contributions from each team member -->
 <p>
 <b>Ruta </b> implemented hash-based spatial map and neighbor finding, remote computation for hive machines, and self-collisions, and debugged the simulation loop and vorticity/viscosity.
 <b> Jacqueline </b> implemented all the shaders, plane collisions, and the incompressibility constraint logic in the simulation loop. Also helped with remote computation.
