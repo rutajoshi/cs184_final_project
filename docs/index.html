@@ -81,12 +81,12 @@
   The density of a fluid, among other properties, affects how its particles
   interact in 3D space. We implemented Miles Macklin and Matthias Müller's
   paper <a href="https://mmacklin.com/pbf_sig_preprint.pdf">Position Based Fluids</a>,
-  which represents fluids as as a set of particles that move at variable positions
-  and velocities, subject to constraints such as vorticity and viscosity, which
+  which represents fluids as as a set of particles. The particles' positions
+  and velocities are subjected to constraints such as vorticity and viscosity, which
   constrain the movement of the fluid. We retrofitted cloth simulation code from
-  Berkeley's CS 184 Project 4, changed the simulation loop to implement density
-  and pressure based updates, remodeled our code for remote training and fast simple
-  local rendering, and created position based shaders to render the particles more
+  Berkeley's CS 184 Project 4 by  changing the simulation loop to implement density
+  and pressure based updates, remodeling our code for remote training and fast simple
+  local rendering, and creating position based shaders to render the particles more
   realistically. Finally, we added a density slider to the GUI so that a user can
   change the density of the fluid in realtime while the simulation is rendering.
 </p>
@@ -194,7 +194,7 @@
 <h4>Incompressibility (Pressure and Density Constraints)</h4>
 
 <p>
-  Our next step was to enforce incompressibility, in which we maintain a constant density throughout the
+  Our next step was to enforce incompressibility by maintaining a constant density throughout the
   fluid. To do this, we displaced each particle relative to its neighbors so that the local density was
   constrained to be the same as the fluid's rest density.
 
@@ -234,7 +234,7 @@
   </div>
   <br>
 
-  To solve for the delta in position, we needed to know the gradient of this constraint. We define this gradient
+  To solve for the <b> $\Delta_\mathbf{p}$</b>, we needed to know the gradient of this constraint. We define this gradient
   with respect to a particle <b>$\mathbf{p}_k$</b> as:
 
   <br>
@@ -243,7 +243,7 @@
   </div>
   <br>
 
-  The kernel $W$ in this equation is the spiky kernel, which is nonzero at the center. This creates repulsive forces between particles, which is
+  The kernel $\mathcal{W}$ in this equation is the spiky kernel, which is nonzero at the center. This creates repulsive forces between particles, which is
   necessary for maintaining fluid density.
 
   After that, we assigned a weight to the gradient, which defines how far we travel along
@@ -350,6 +350,7 @@
     $\large \mathbf{f}_i ^{vorticity} = \epsilon \big(\mathbf{N} \times \omega_i\big)$
   </div>
   <br>
+  We used this force to update the particles velocity.
 </p>
 
 <br>
