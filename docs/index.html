@@ -30,6 +30,11 @@
     padding: 20px 20px 20px 20px;
     font-size: 1.5rem;
   }
+  /*<style type="text/css">*/
+<!--
+ .tab { margin-left: 40px; }
+-->
+
 </style>
 <title>CS 184 Final Project Report</title>
 <!-- <script type="text/x-mathjax-config">
@@ -65,10 +70,10 @@
 <br><br>
 
 <!-- TODO standardize all equations with LaTeX -->
-<div align="middle">
+<!-- <div align="middle">
   <iframe width="560" height="315" src="https://www.youtube.com/embed/y4y9h6AsaaQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
   <figcaption align="middle">Video</figcaption>
-</div>
+</div> -->
 
 <br><br>
 
@@ -458,22 +463,29 @@ in real time -->
 <!-- TODO someone verify these are correct links, copied from project checkpoint -->
 <ul>
   <li>
-    <a href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
     <p>
+ Miles Macklin and Matthias Müller. Position based fluids. ACM Transactions on Graphics (TOG), 32(4):104, 2013.</p>
+    <a class = "tab" href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
+    <p class = "tab" >
       This is the core fluid simulation paper we referenced. We implementation the simulation loop
       and fluid constraints in this paper.
     </p>
   </li>
   <li>
-    <a href="https://dl.acm.org/citation.cfm?id=1360647">https://dl.acm.org/citation.cfm?id=1360647</a>
-    <p>
+    <p>Jeong-Mo Hong, Ho-Young Lee, Jong-Chul Yoon, and Chang-Hun Kim. Bubbles alive. ACM Trans. Graph.,
+27(3):48:1–48:4, August 2008.
+</p>
+    <a class = "tab"  href="https://dl.acm.org/citation.cfm?id=1360647">https://dl.acm.org/citation.cfm?id=1360647</a>
+    <p class = "tab" >
       We referenced this paper for assistance with implementing vorticity constraints. The paper "Position
       Based Fluids" (above) referenced this paper in their vorticity constraint calculations.
     </p>
   </li>
   <li>
-    <a href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf</a>
-    <p>
+    <p>Bodin, Kenneth. “SPH Survival Kit .”</p>
+    
+    <a class = "tab" href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf</a>
+    <p class = "tab"  >
       We used some of the kernels included in this link.
     <p>
   </li>
