@@ -24,7 +24,7 @@
     font-size: 1.8rem;
     /*background: #D3D3D3;*/
   }
-  
+
   .loop_box {
     background-color: #9BBED6;
     padding: 20px 20px 20px 20px;
@@ -99,6 +99,14 @@
 
 <h2>Technical Approach</h2>
 
+<p>Our technical approach was to use position updates that were derived from the motion of
+  fluids. This approach is a subset of Smoothed Particle Hydrodynamics, a computational
+  method for fluid simulation that uses classical mechanics and smoothing kernels to
+  replicate the motion of particles in a fluid. To do this, we implemented the paper
+  Position Based Fluids, by Miles Macklin and Matthias Müller. We added modifications
+  based on differences in our simulation parameters as needed.
+</p>
+
 <h3>Fluid Simulation Loop</h3>
 <!-- [done above] TODO show + explain pseudocode for Macklin and Muller loop, include main equations-->
 <!-- TODO explain kernels-->
@@ -117,7 +125,7 @@
         predict position x*_i ⇐ x_i +∆t(v_i)
       end for
 
-      build a spatial map to find neighboring particles N_i for all point 
+      build a spatial map to find neighboring particles N_i for all point
         masses given predicted position x*_i
 
       while iter < solverIterations do
@@ -134,12 +142,12 @@
         end for
 
         for all particles i do
-          check for self-collisions and displace particles that are too close to 
+          check for self-collisions and displace particles that are too close to
             their neighbors
         end for
 
         for all particles i do
-          bound particle position by the bounds of the containing box 
+          bound particle position by the bounds of the containing box
             (replaces plane collision-checking)
         end for
       end while
@@ -153,15 +161,12 @@
   </div>
 
   <br><br>
- <p>
+<p>
   We moved the collision-checking code to be executed after the update to the predicted
   position. We did this because self-collision-checking updates modify the predicted position
   of a particle directly. The paper, in contrast, assumes collision-checking changes the delta which is
   calculated after the density and incompressibility constraints are applied.
-
-
   <br><br>
-
   We will now walk through each part of the loop.
 </p>
 
@@ -197,6 +202,7 @@
   Our next step was to enforce incompressibility, in which we maintain a constant density throughout the
   fluid. To do this, we displaced each particle relative to its neighbors so that the local density was
   constrained to be the same as the fluid's rest density.
+
   We were solving for the following constraint, in which <b>$\rho_i$</b> is the density of the particle, and
   <b>$\rho_0$</b> is the rest density of the fluid:
 
@@ -241,6 +247,9 @@
     $\large \nabla_{\mathbf{p}_k} \mathcal{C}_i= \frac{1}{\rho_0}\sum_j \nabla_{\mathbf{p}_k} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
   </div>
   <br>
+
+  The kernel $W$ in this equation is the spiky kernel, which is nonzero at the center. This creates repulsive forces between particles, which is
+  necessary for maintaining fluid density.
 
   After that, we assigned a weight to the gradient, which defines how far we travel along
   our gradient. We do this differently for each particle, so we assign a variable <b>$\lambda_i$</b>
@@ -312,12 +321,9 @@
 
   <br>
   <div align="middle">
-
-
     $ \large
     \mathbf{p}_i^{cm} = \frac{m_i \mathbf{p}_i + \sum_j m_j \mathbf{p}_j} {m_i+\sum_j m_j}$
   </div>
-  <!-- <img src="final_images/vorticity/center_of_mass.png"/> -->
   <br>
 
   We use this to calculate a location vector <b>$\eta$</b>, which we normalize:
@@ -326,14 +332,12 @@
   <div align="middle">
     $\large \eta = \mathbf{p}_i^{cm}  - \mathbf{p}_i$
   </div>
-  <!-- <img src="final_images/vorticity/eta.png"/> -->
   <br>
 
   <br>
   <div align="middle">
     $\large \mathbf{N} =  \frac{\eta}{\vert \eta \vert}$
   </div>
-  <!-- <img src="final_images/vorticity/eta_normalized.png"/> -->
   <br>
 
   We then use the location vector <b>$\eta$</b> with a vorticity <b>$\omega_i$</b> to
@@ -343,7 +347,6 @@
   <div align="middle">
     $\large \mathbf{f}_i ^{vorticity} = \epsilon \big(\mathbf{N} \times \omega_i\big)$
   </div>
-  <!-- <img src="final_images/vorticity/f_vorticity_i.png"/> -->
   <br>
 </p>
 
@@ -352,30 +355,82 @@
 <p>
   Viscosity defines how thick a fluid is. It also creates coherent motion within
   the fluid; particles that are close together move together. Thus, we have to
-  adjust particles' velocities such that they are closer to the velocities
-  of particles around them. We accomplish this with the following velocity
-  update:
+  adjust particles' velocities such that they are more similar to the velocities
+  of their neighbors. We accomplish this with the following velocity update:
 
   <br>
   <div align="middle">
     $\large \mathbf{v}_i^{new} = \mathbf{v}_i + c\sum_j \mathbf{v}_{ij} \mathcal{W}(\mathbf{p}_i - \mathbf{p}_j, h)$
   </div>
-  <!-- <img src="final_images/viscosity/viscosity_eq.png"/> -->
   <br>
+</p>
+
+<h3>Problems Encountered and Our Solution</h3>
+<p>
+  When testing our simulation loop, we struggled to find appropriate parameters for
+  the fluid's rest density, particle mass, kernel radius, tensile instability constants,
+  and others. Macklin himself suggested a set of parameters that we referenced from an
+  assignment for Stanford's CS 384C. However, we found that Macklin's parameters sometimes
+  failed with our constraints on volume and the number of particles. Primarily, we found
+  that for 1000 particles, a kernel radius h of 8 or 9 worked much better than Macklin's
+  suggested 0.1. Using Macklin's parameters caused the kernel gradients to explode. For students
+  referencing this writeup in the future, we have compiled a list of our own constants, should
+  they be useful:
+
+  <pre class="prettyprint">
+    number of particles = 10x10x10 to 15x15x15
+    fluid rest density = 4000 (kg/m^3)
+    kernel radius h = 8
+    hash bucket side length = 0.15
+    simulation_steps = 2
+    frames_per_sec = 60
+    delta_t = 1 / (frames_per_sec * simulation_steps) = 0.0083
+
+    Tensile instability k = 500
+    Tensile instability n = 4
+    Magnitude of delta_q = 0.03
+    s_corr = result of calculations using the above (instead of hardcoded value suggested by Macklin)
+  </pre>
+
+  We also struggled to understand the mathematical intuition behind kernel functions.
+  This was easy to solve through extensive googling. We recommend the SPH Survival Kit
+  cited under References for anyone wishing to understand the application of kernels.
+
+  We modeled our points as two-dimensional circles that rotated based on the camera space,
+  using OpenGL's point rendering. This made it difficult to tell which particles were in the
+  foreground and which were in the background. To debug, we changed our shaders to color particles
+  based on their initial heights, their current heights, and their distance from the center
+  of the box. Changing the shaders allowed us to see the differences in particle position.
+  Using OpenGL points instead of spheres also allowed us to render fairly quickly, and
+  prevented us from needing to use a GPU.
+</p>
+
+<h3>Lessons Learned</h3>
+<p>
+  We learned throughout the implementation of this project that parameters are difficult to tune,
+  and that it was not always feasible to run a parameter search, even using the hive machines.
+  Physics-based simulation often requires extensive computation, and GPUs are often used to accelerate
+  rendering and position updates. Having implemented speedups using OpenMP parallelism to run on the hive
+  machines instead, we realize now that using a GPU may have been a superior or simpler way to do the
+  same thing.
+
+  We also learned that kernel functions are largely arbitrary and difficult to debug. The functions
+  are chosen to smooth inputs or to transform them mainly because they make the simulation look
+  more fluid-like, and not because they have any basis in physics themselves.
 </p>
 
 <h3>Density Slider</h3>
 <!-- TODO include picture -->
 <p>
-  We wanted to see changes in a fluid density in real time. We added a density
+  We wanted to see changes in a fluid density in real time, so we added a density
   slider similar to the sliders for Project 4 parameters. This slider adjusts
-  the density as the simulation is running, meaning a fluid can start in the simulation
-  like a liquid, and be modified to a gas immediately.
+  the density as the simulation is running, meaning a fluid can transition from
+  liquid to gas to viscous liquid in realtime.
 </p>
 
 <br><br>
 
-<h3>Modifying Project 4 Starter Code for Fluids</h3>
+<h3>Modifying Project 4 Starter Code: Cloths to Fluids</h3>
 <!-- TODO how we modified project 4 for our simulation-->
 <p>
   We began by modifying code from
@@ -388,11 +443,10 @@
   self-collision checking. Our updated version of the loop is below:
 
   <br><br>
-
   We also modified the cloth simulation code to render the point masses as
   OpenGL points of fixed radius. Later, we experimented with rendering them as
   spheres, using the sphere collision object from Project 4. We found that
-  particle simulation alone was much faster, since rendering spheres with any
+  particle simulation with points was much faster, since rendering spheres with any
   type of shading took much more computation time.
 </p>
 <!-- TODO include picture -->
@@ -448,11 +502,15 @@
 </div>
 <br>
 
+
+
 <h2>Results</h2>
 <!-- TODO add lots of images -->
 <!-- one video for water, one video/gif for different density, one video of changing
 in real time -->
 <p>
+
+RUTA UPLOAD THE VIDEOS TO YOUTUBE PLEASE
 
 </p>
 
@@ -463,31 +521,55 @@ in real time -->
 <!-- TODO someone verify these are correct links, copied from project checkpoint -->
 <ul>
   <li>
+<!-- <<<<<<< HEAD -->
     <p>
  Miles Macklin and Matthias Müller. Position based fluids. ACM Transactions on Graphics (TOG), 32(4):104, 2013.</p>
     <a class = "tab" href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
     <p class = "tab" >
       This is the core fluid simulation paper we referenced. We implementation the simulation loop
+<!-- ======= -->
+    <a href="https://mmacklin.com/pbf_sig_preprint.pdf">Position Based Fluids, by Macklin and Müller</a>
+    <p>
+      This is the primary fluid simulation paper we referenced. We implemented the simulation loop
+<!-- >>>>>>> 1939cedbf64d4c8ade08e689ad4df2fe86863789 -->
       and fluid constraints in this paper.
     </p>
   </li>
   <li>
+<!-- <<<<<<< HEAD -->
     <p>Jeong-Mo Hong, Ho-Young Lee, Jong-Chul Yoon, and Chang-Hun Kim. Bubbles alive. ACM Trans. Graph.,
 27(3):48:1–48:4, August 2008.
 </p>
     <a class = "tab"  href="https://dl.acm.org/citation.cfm?id=1360647">https://dl.acm.org/citation.cfm?id=1360647</a>
     <p class = "tab" >
+<!-- ======= -->
+    <a href="https://dl.acm.org/citation.cfm?id=1360647">Bubbles Alive, by Hong et al.</a>
+    <p>
+<!-- >>>>>>> 1939cedbf64d4c8ade08e689ad4df2fe86863789 -->
       We referenced this paper for assistance with implementing vorticity constraints. The paper "Position
       Based Fluids" (above) referenced this paper in their vorticity constraint calculations.
     </p>
   </li>
   <li>
+<!-- <<<<<<< HEAD -->
     <p>Bodin, Kenneth. “SPH Survival Kit .”</p>
     
     <a class = "tab" href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf</a>
     <p class = "tab"  >
       We used some of the kernels included in this link.
+<!-- ======= -->
+    <a href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">Umea University's SPH Survival Kit</a>
     <p>
+      We used the kernel function equations included in this survival kit.
+    <p>
+  </li>
+  <li>
+    <a href = "http://graphics.stanford.edu/courses/cs348c/PA1_PBF2016/index.html">Stanford CS 384C Assignment 3 Spec</a>
+<!-- >>>>>>> 1939cedbf64d4c8ade08e689ad4df2fe86863789 -->
+    <p>
+      We used the constants recommended by Macklin and mentioned in this spec while testing. We also used the idea
+      of searching for neighbors in 27 neighboring grid boxes, as implemented in this assignment starter code.
+    </p>
   </li>
 </ul>
 
