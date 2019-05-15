@@ -172,12 +172,16 @@
 
 <h4>External Forces</h4>
 <!-- TODO picture -->
-<p>
-  We first applied external forces (e.g. gravity) to each particle. We take a force and calculate
+  <p>We first applied external forces (e.g. gravity) to each particle. We take a force and calculate
   an acceleration from it by dividing by the particle mass (1 kg, which is trivial). Then, we account
   for this acceleration in the velocity and position of each point mass using discrete time updates
   given a timestep $\Delta t$.
 </p>
+<div align="middle">
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/iI3zqzUCUyY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <figcaption align="middle">Only External Forces of Gravity Acting on Particles</figcaption>
+  </div>
+
 
 <h4>Finding Neighbors</h4>
 <!-- TODO hashing + neighbors -->
@@ -198,6 +202,7 @@
 
 <h4>Incompressibility (Pressure and Density Constraints)</h4>
 <!-- TODO pressure - incompressibility, tensile instability, discuss clumping / show video + picture -->
+
 <p>
   Our next step was to enforce incompressibility, in which we maintain a constant density throughout the
   fluid. To do this, we displaced each particle relative to its neighbors so that the local density was
@@ -300,6 +305,13 @@
   <br>
 </p>
 
+<div align="middle">
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/9pzD6YndyUc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <figcaption align="middle">Adding Incompressibility to a Fluid</figcaption>
+  </div>
+
+
+
 <h4>Vorticity</h4>
 <!-- TODO vorticity - implemented a different version of eta from Bubbles Alive -->
 <p>
@@ -365,6 +377,11 @@
   <br>
 </p>
 
+<div align="middle">
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/nsFaBwauvQo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <figcaption align="middle">Vorticity + Viscosity Acting on Particles</figcaption>
+  </div>
+
 <h3>Problems Encountered and Our Solution</h3>
 <p>
   When testing our simulation loop, we struggled to find appropriate parameters for
@@ -421,12 +438,20 @@
 
 <h3>Density Slider</h3>
 <!-- TODO include picture -->
+
 <p>
   We wanted to see changes in a fluid density in real time, so we added a density
   slider similar to the sliders for Project 4 parameters. This slider adjusts
   the density as the simulation is running, meaning a fluid can transition from
   liquid to gas to viscous liquid in realtime.
 </p>
+
+
+<div align="middle">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/-4HAvu_XsR8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+  <figcaption align="middle">Using Density Slider to Change Density in Real Time</figcaption>
+</div>
 
 <br><br>
 
@@ -511,6 +536,10 @@ in real time -->
 <p>
 
 RUTA UPLOAD THE VIDEOS TO YOUTUBE PLEASE
+<div align="middle">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/y4y9h6AsaaQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <figcaption align="middle">Fully Implemented Simulation Loop</figcaption>
+</div>
 
 </p>
 
