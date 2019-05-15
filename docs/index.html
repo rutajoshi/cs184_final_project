@@ -30,12 +30,11 @@
     padding: 20px 20px 20px 20px;
     font-size: 1.5rem;
   }
-  /*<style type="text/css">*/
-<!--
- .tab { margin-left: 40px; }
--->
+
+   .tab { margin-left: 40px; }
 
 </style>
+
 <title>CS 184 Final Project Report</title>
   <script type="text/x-mathjax-config"> MathJax.Hub.Config({ TeX: { equationNumbers: { autoNumber: "all" } } }); </script>
        <script type="text/x-mathjax-config">
@@ -316,7 +315,7 @@
   </div>
   <br>
 
-  
+
   Additionally, we need a location vector, which is a vector pointing toward
   the center of the circular motion. We calculate the center of mass of a point mass
   and its neighbors:
@@ -397,11 +396,11 @@
     Tensile instability k = 500
     Tensile instability n = 4
     Magnitude of delta_q = 0.03
-    s_corr = result of calculations using the above 
+    s_corr = result of calculations using the above
             (instead of hardcoded value suggested by Macklin)
   </pre>
   </div>
-  
+
 
   We also struggled to understand the mathematical intuition behind kernel functions.
   This was easy to solve through extensive googling. We recommend the SPH Survival Kit
@@ -471,7 +470,10 @@
 
 <br>
 <div align="middle">
-<img src="final_images/modifying_starter_code/bottom_plane.png" align="middle" width="500px" />
+  <figure>
+    <img src="final_images/modifying_starter_code/bottom_plane.png" align="middle" width="500px" />
+    <figcaption>Particles in 3D space above a plane.</figcaption>
+  </figure>
 </div>
 <br>
 
@@ -513,26 +515,32 @@
 </p>
 <br>
 <div align="middle">
-<img src="final_images/modifying_starter_code/box_side_view.png" align="middle" width="500px"/>
+  <figure>
+    <img src="final_images/modifying_starter_code/box_side_view.png" align="middle" width="500px"/>
+    <figcaption>Particles grid within a square bounding box.</figcaption>
+  </figure>
 </div>
 <br>
 
 
 
 <h2>Results</h2>
-<!-- TODO add lots of images -->
-<!-- one video for water, one video/gif for different density, one video of changing
-in real time -->
 <p>
+  Our final results consist of a grid of point masses that fall into a bounding box. The fluid sloshes
+  from side to side due to position based updates, maintains its incompressibility due to density constraints,
+  and keeps its particles in coherent motion using vorticity and viscosity.
+
+  We use height-based shading on OpenGL points instead of path-tracing or other methods of implementing fluid
+  surface lighting because it is much faster to simulate and because shaders can be modified based on other
+  properties, such as depth or distance from the center of the box.
+
+  We also include a density slider bar to change the density in realtime. At low density, the particles behave
+  like a gas and expand to fill the full space. At higher densities, the particles settle and respond better
+  to gravity. They compress to fill a smaller space as the density increases.
 <div align="middle">
   <iframe width="560" height="315" src="https://www.youtube.com/embed/LBIJp4CO32A" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
   <figcaption align="middle"> Overview Video </figcaption>
 </div>
-<div align="middle">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/y4y9h6AsaaQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-  <figcaption align="middle">Fully Implemented Simulation Loop</figcaption>
-</div>
-
 </p>
 
 <br><br>
@@ -541,7 +549,7 @@ in real time -->
 <ul>
   <li>
     <p>
- Miles Macklin and Matthias Müller. Position based fluids. ACM Transactions on Graphics (TOG), 32(4):104, 2013.</p>
+      Miles Macklin and Matthias Müller. Position based fluids. ACM Transactions on Graphics (TOG), 32(4):104, 2013.</p>
     <a class = "tab" href="https://mmacklin.com/pbf_sig_preprint.pdf">https://mmacklin.com/pbf_sig_preprint.pdf</a>
     <p class = "tab" >
       This is the core fluid simulation paper we referenced. We implementation the simulation loop
@@ -562,7 +570,7 @@ in real time -->
   <li>
 
     <p>Bodin, Kenneth. “SPH Survival Kit .”</p>
-    
+
     <a class = "tab" href="http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf">http://www8.cs.umu.se/kurser/TDBD24/VT06/lectures/sphsurvivalkit.pdf</a>
     <p class = "tab"  >
       We used some of the kernels included in this link of Umea University's SPH Survival Kit</a>
